@@ -1,0 +1,17 @@
+{
+  "configurations": [
+    {
+      "name": "x64-Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [
+        "msvc_x64_x64"
+      ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "-DFB_INCLUDE_PATH=D:\\VC17_LIB\\FlatBuffer\\include -DFB_LIBRARY=D:\\VC17_LIB\\FlatBuffer\\lib -DSOIL_INCLUDE_PATH=D:\\VC17_LIB\\soil64\\include -DSOIL_LIBRARY=D:\\VC17_LIB\\soil64\\lib -DSTB_INCLUDE_PATH=D:\\VC17_LIB\\stb -DGLM_INCLUDE_PATH=D:\\VC17_LIB\\glm\\include -DGLEW_INCLUDE_PATH=D:\\VC17_LIB\\glew64\\include -DGLEW_LIBRARY=D:\\VC17_LIB\\glew64\\lib -DGLFW_INCLUDE_PATH=D:\\VC17_LIB\\GLFW64\\include -DGLFW_LIBRARY=D:\\VC17_LIB\\GLFW64\\lib -DGLAD_INCLUDE_PATH=D:\\VC17_LIB\\GLAD\\include -DGLAD_LIBRARY=D:\\VC17_LIB\\GLAD\\lib  -DASSIMP_LIBRARY=D:\\VC17_LIB\\Assimp64\\lib -DASSIMP_INCLUDE_PATH=D:\\VC17_LIB\\Assimp64\\include",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    }
+  ]
+}

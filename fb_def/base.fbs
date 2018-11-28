@@ -1,0 +1,13 @@
+namespace YASE.def;
+
+struct Vec3 {
+	x:float;
+	y:float;
+	z:float;
+}
+
+struct CameraPosition {
+	front:Vec3;
+	direction:Vec3;
+	high:Vec3;
+}
