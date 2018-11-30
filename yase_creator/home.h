@@ -1,18 +1,18 @@
 #ifndef HOME_H
 #define HOME_H
 
-#include "../imgui/imgui.h"
-#include "../imgui/imgui_other.h"
-#include "../YASE/environment.h"
+#include "imgui.h"
+#include "imgui_other.h"
+#include "env_manager.h"
 
-using namespace YASE::ENV;
+#include "logger.h"
 
 class HomeWindow
 {
-	EnvironmentLoader* loader = nullptr;
+	EnvManager* loader = nullptr;
 
 public:
-	HomeWindow(EnvironmentLoader* el) : loader(el)
+	HomeWindow(EnvManager* el) : loader(el)
 	{
 		
 	}
@@ -46,7 +46,9 @@ public:
 			{
 				if(!loader->createNew(buffer_path,buffer_name))
 				{
-					
+				}
+				else {
+					*over = true;
 				}
 			}
 			ImGui::SameLine();
@@ -63,7 +65,8 @@ public:
 				if(fx.is_close)
 				{
 					wait_file_new = false;
-					strcpy(buffer_path, fx.selected_current.string().c_str());
+					if(!fx.selected_current.empty())
+						strcpy(buffer_path, fx.selected_current.string().c_str());
 				}
 			}
 
@@ -73,10 +76,14 @@ public:
 				if(fx.is_close)
 				{
 					wait_file = false;
-					if(!loader->load(fx.selected_current))
-					{
-						// Message d'erreur
-					}
+					if(!fx.selected_current.empty())
+						if(!loader->load(fx.selected_current))
+						{
+							// Message d'erreur
+						}
+						else {
+							*over = true;
+						}
 				}
 			}
 

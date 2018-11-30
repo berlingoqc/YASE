@@ -28,6 +28,8 @@ set(STB_INCLUDE_PATH "" CACHE PATH "The directory that contains stb_image.h")
 set(FB_INCLUDE_PATH "" CACHE PATH "The directory that contains flatbuffers/flatbuffers.h" )
 set(FB_LIBRARY "" CACHE PATH "The directory that contains flatbuffers.lib" )
 
+include (FindProtobuf)
+Find_Package (Protobuf REQUIRED)
 
 if(win32)
 	set( GL_LIBS glew32 glfw3 glad SOIL assimp-vc140-mt )
@@ -46,20 +48,24 @@ include_directories(
 	${ASSIMP_INCLUDE_PATH}
 	${STB_INCLUDE_PATH}
 	${FB_INCLUDE_PATH}
+	${PROTOBUF_INCLUDE_DIR}
 	fb_def/include
 )
 
 link_directories(
 	${GLEW_LIBRARY}
+	${Protobuf_LIBRARIES}
 	${ASSIMP_LIBRARY}
 	${GLFW_LIBRARY}
 	${FB_LIBRARY}
 	${SOIL_LIBRARY}
 )
-
+add_definitions (-DPROTOBUF_USE_DLLS)
 
 # Include sub-projects.
+add_subdirectory ("proto_def")
+include_directories ("${CMAKE_CURRENT_BINARY_DIR}/proto_def")
+
 add_subdirectory ("imgui")
 add_subdirectory ("crazygl")
-add_subdirectory ("YASE")
 add_subdirectory ("yase_creator")

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package YASE.DEF;
+
+message Vec3f {
+	float x = 1;
+	float y = 2;
+	float z = 3;
+}
+
+message CameraPosition {
+	Vec3f front = 1;
+	Vec3f position = 2;
+	Vec3f height = 3;
+}
+
+

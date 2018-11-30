@@ -5,10 +5,10 @@
 #include <GLFW/glfw3.h>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
-#include "examples/imgui_impl_opengl3.h"
+#include "imgui_impl_opengl3.h"
 #include "imgui_other.h"
-#include "../YASE/environment.h"
 #include "home.h"
+#include "env_page.h"
 
 using namespace std;
 
@@ -27,13 +27,17 @@ class YASECreator
 {
 	GLFWwindow*	window;
 
-	YASE::ENV::EnvironmentLoader environment_loader;
+	EnvManager environment_loader;
 
 	HomeWindow home_window;
+	EnvironmentWindow env_window;
 
 	YASECreator_state state;
 public:
-	YASECreator() : home_window(&environment_loader), state(HOME_PAGE), window(0) {}
+	YASECreator() : home_window(&environment_loader),
+		env_window(&environment_loader),
+		state(HOME_PAGE),
+		window(0) {}
 
 	void init()
 	{
@@ -90,6 +94,7 @@ public:
 	void mainLoop()
 	{
 		static bool home_page_over = false;
+		static bool env_page_over = false;
 
 		while (!glfwWindowShouldClose(window))
 		{
@@ -105,7 +110,7 @@ public:
 			switch (state)
 			{
 			case HOME_PAGE:
-				home_window.Draw(&home_page_over);
+				home_window.Draw(&home_page_over,&home_page_over);
 				if(home_page_over)
 				{
 					state = CREATOR;
@@ -113,6 +118,10 @@ public:
 
 				break;
 			case CREATOR:
+				env_window.Draw(&env_page_over);
+				if (env_page_over) {
+
+				}
 				break;
 			}
 
@@ -149,11 +158,8 @@ public:
 };
 
 
-
-
 int main()
 {
-
 	YASECreator c;
 	c.init();
 	c.mainLoop();

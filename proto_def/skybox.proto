@@ -1,0 +1,12 @@
+syntax = "proto3";
+package YASE.DEF;
+
+
+message SkyBox {
+    string  name = 1;
+    string  ext = 2;
+}
+
+message SkyBoxManager {
+    repeated SkyBox boxs = 1;
+}

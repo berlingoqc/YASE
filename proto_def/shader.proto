@@ -1,0 +1,31 @@
+syntax = "proto3";
+package YASE.DEF;
+
+
+enum ShaderType {
+    VERTEX_SHADER = 0;
+    FRAGMENT_SHADER = 1;
+    GEOMETRY_SHADER = 2;
+    TESSELATION_SHADER = 3;
+}
+
+message ShaderFile {
+    int32 id = 1;
+    string namefile = 2;
+    ShaderType shader = 3;
+}
+
+message ShaderProgram {
+    int32 id = 1;
+    string name = 2;
+
+    ShaderFile vertex_shader = 3;
+    ShaderFile fragment_shader = 4;
+    ShaderFile geometry_shader = 5;
+    ShaderFile tesselation_shader = 6;
+}
+
+message ShaderManager {
+    repeated ShaderFile files = 1;
+    repeated ShaderProgram programes = 2;
+}
