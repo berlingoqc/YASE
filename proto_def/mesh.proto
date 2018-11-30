@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package YASE.DEF;
+
+import "base.proto";
+
+message Vertex {
+	Vec3f Position = 1;
+	Vec3f Normal = 2;
+	Vec2f TexCoord = 3;
+	
+	Vec3f Tangeant = 4;
+	Vec3f Bitangeant = 5;
+}
+
+message Mesh {
+	repeated Vertex vertices = 2;
+	repeated uint32 indices = 3;
+	repeated int32 textures_index = 4;
+}
+
+message Model {
+	string name = 1;
+	repeated Mesh meshes = 2;
+}

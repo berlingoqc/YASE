@@ -6,6 +6,32 @@
 
 #include "env_manager.h"
 
+struct TexturePreview
+{
+
+	void Draw(uint text_id, bool* p_open = nullptr)
+	{
+		static int img_size[2]{ 200, 200};
+		if(text_id != ERROR_TEXTURE && *p_open)
+		{
+			if(ImGui::Begin("Apercu texture",p_open))
+			{
+				ImGui::DragInt2("Grandeur", img_size, 1, 10, 800);
+				ImGui::Separator();
+				if (text_id != ERROR_TEXTURE)
+				{
+					ImGui::Image((void*)text_id, ImVec2(img_size[0], img_size[1]));
+				}
+
+				ImGui::End();
+			}
+
+		}
+		
+	}
+	
+};
+
 
 class EnvironmentWindow {
 
@@ -23,7 +49,8 @@ class EnvironmentWindow {
 
 	bool				run_main_loop = true;
 	
-	AppLog		log_window;
+	AppLog				log_window;
+	TexturePreview		texture_preview_window;
 
 public:
 	EnvironmentWindow(EnvManager* l) {
@@ -34,7 +61,6 @@ public:
 
 	void ShowLogger() {
 		if (logger_panel) {
-			YASE_LOG_INFO("Erreur creation nouvelle %s", "popo");
 			for (const auto& v : logger.Consume()) {
 				log_window.AddLog(v.c_str());
 			}
@@ -99,7 +125,7 @@ public:
 			static FileExplorer fx;
 
 			static int selected_texture = -1;
-
+			static bool show_preview = false;
 
 			if (ImGui::Begin("Textures environment",&textures_panel)) {
 				ImGui::TextColored({ 255,255,0,1 }, "Ajouter et configurer les textures de votre environment");
@@ -168,15 +194,16 @@ public:
 					if(selected_texture != -1)
 					{
 						text_id = tex_man->loadTexture(selected_texture);
+						show_preview = true;
 					}
 					
 				}
-
-				ImGui::Separator();
 				if(text_id != ERROR_TEXTURE)
 				{
-					ImGui::Image((void*)text_id,ImVec2(200,200));
+					texture_preview_window.Draw(text_id, &show_preview);
 				}
+
+				ImGui::Separator();
 
 				ImGui::End();
 			}
@@ -248,6 +275,14 @@ public:
 
 					ImGui::TreePop();
 				}
+				if(ImGui::Button("Afficher"))
+				{
+					if (!selected_skybox.empty())
+					{
+						loader->getActiveScene().setActiveSkybox(selected_skybox);
+					}
+
+				}
 				ImGui::End();
 			}
 		}
@@ -257,6 +292,10 @@ public:
 		if (run_main_loop = false) {
 			*over = true;
 		}
+
+
+		loader->getActiveScene().Draw();
+
 		ShowMenuBar();
 		ShowLogger();
 		ShowOverlay();

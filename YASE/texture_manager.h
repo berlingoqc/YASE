@@ -138,6 +138,18 @@ public:
 		return true;
 	}
 
+	vector<uint> loadTexture(vector<int> index)
+	{
+		vector<uint> v;
+		for(const auto& i : index)
+		{
+			uint tid = loadTexture(i);
+			if (tid == ERROR_TEXTURE)
+				continue;
+			v.emplace_back(tid);
+		}
+		return v;
+	}
 
 	uint loadTexture(int index)
 	{

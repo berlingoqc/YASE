@@ -5,12 +5,16 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include "textures.h"
 #include "logger.h"
 
 #include "texture_manager.h"
 #include "shader_manager.h"
+#include "model_manager.h"
 #include "skybox_manager.h"
+
+#include "scene.h"
 
 #include "base.pb.h"
 #include "env.pb.h"
@@ -33,6 +37,9 @@ namespace fs = std::filesystem;
 		SkyBoxManager		skybox_manager;
 		ShadersManager		shader_manager;
 
+		vector<BaseScene>	scene;
+		int					active_scene = 0;
+
 	public:
 		fs::path getRootFolder() {
 			return root_folder;
@@ -51,10 +58,16 @@ namespace fs = std::filesystem;
 			return &skybox_manager;
 		}
 
+		BaseScene&	getActiveScene()
+		{
+			return scene[0];
+		}
+
 		EnvManager()
 		{
 
 		}
+
 
 		bool createNew(fs::path directory,string name) {
 			if (name.empty() || !fs::exists(directory))
@@ -77,6 +90,8 @@ namespace fs = std::filesystem;
 				return false;
 			if (!skybox_manager.Save())
 				return false;
+			BaseScene b(&texture_manager, &skybox_manager);
+			scene.emplace_back(b);
 			return save();
 		}
 
@@ -115,6 +130,8 @@ namespace fs = std::filesystem;
 			skybox_manager.setRootFolder(tex_root);
 			if (!skybox_manager.Load())
 				return false;
+			BaseScene b(&texture_manager, &skybox_manager);
+			scene.emplace_back(b);
 			return texture_manager.Load();
 		}
 	};

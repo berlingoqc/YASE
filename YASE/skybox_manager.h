@@ -138,10 +138,26 @@ public:
 		return true;
 	}
 
+
+
 	uint LoadSkyBox(std::string name)
 	{
-		
-		return 0;
+		const auto& b = boxes.find(name);
+		if (b == boxes.end())
+			return ERROR_TEXTURE;
+		if (std::get<1>(b->second) != ERROR_TEXTURE)
+			return std::get<1>(b->second);
+		vector<string> faces;
+		const auto sb = std::get<0>(b->second);
+		for(int i = 0;i<6;i++)
+		{
+			fs::path p = root_folder / sb.name();
+			p = p / skybox_files[i];
+			faces.emplace_back(p.string().append(sb.ext()));
+		}
+		uint tid = texture_loader.GetTextureSky(faces);
+		std::get<1>(boxes[name]) = tid;
+
 	}
 };
 

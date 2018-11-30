@@ -2,6 +2,11 @@ syntax = "proto3";
 
 package YASE.DEF;
 
+message Vec2f {
+	float x = 1;
+	float y = 2;
+}
+
 message Vec3f {
 	float x = 1;
 	float y = 2;
