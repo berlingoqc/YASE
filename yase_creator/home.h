@@ -82,6 +82,8 @@ public:
 							// Message d'erreur
 						}
 						else {
+							ImVec2 v = ImGui::GetIO().DisplaySize;
+							loader->getActiveScene().setSceneSize(v.x, v.y);
 							*over = true;
 						}
 				}

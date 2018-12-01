@@ -156,8 +156,9 @@ public:
 			faces.emplace_back(p.string().append(sb.ext()));
 		}
 		uint tid = texture_loader.GetTextureSky(faces);
+		loaded_skybox_index++;
 		std::get<1>(boxes[name]) = tid;
-
+		return tid;
 	}
 };
 

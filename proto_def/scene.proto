@@ -1,0 +1,13 @@
+syntax = "proto3";
+package YASE.DEF;
+
+import "base.proto";
+
+message Scene {
+	string name = 1;
+
+	string	skybox_name = 2;
+
+	CameraPosition	 work_camera = 3;
+	CameraPosition	scene_camera = 4;
+}

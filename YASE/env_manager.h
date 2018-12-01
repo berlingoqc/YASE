@@ -40,6 +40,7 @@ namespace fs = std::filesystem;
 		vector<BaseScene>	scene;
 		int					active_scene = 0;
 
+
 	public:
 		fs::path getRootFolder() {
 			return root_folder;

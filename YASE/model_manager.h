@@ -21,6 +21,53 @@ namespace fs = std::filesystem;
 using namespace std;
 
 
+static glm::vec3	vertex_base[4]
+{
+	{-500,0,-500}, {500,0,-500}, {-500,0,500}, {500,0,500}
+};
+static unsigned int	indice_base[6]
+{
+	0,1,2,1,2,3
+};
+static glm::vec2	tex_bas[4]
+{
+	{0.0,0.0}, {100,0}, {0,100}, {100,100}
+};
+
+inline YASE::DEF::Model getDefaultModel()
+{
+	YASE::DEF::Model m;
+	m.set_name("ground");
+	YASE::DEF::Mesh mesh;
+	for(int i = 0; i < 4; i++)
+	{
+		YASE::DEF::Vec3f* vert = new YASE::DEF::Vec3f();
+		YASE::DEF::Vec2f* tex = new YASE::DEF::Vec2f();
+
+		vert->set_x(vertex_base[i].x);
+		vert->set_y(vertex_base[i].y);
+		vert->set_z(vertex_base[i].z);
+
+		tex->set_x(tex_bas[i].x);
+		tex->set_y(tex_bas[i].y);
+
+		auto* v = mesh.add_vertices();
+		v->set_allocated_position(vert);
+		v->set_allocated_texcoord(tex);
+	}
+	for(int i = 0;i<6;i++)
+	{
+		mesh.add_indices(indice_base[i]);
+	}
+	mesh.add_textures_index(0);
+	auto* am = m.add_meshes();
+	*am = mesh;
+
+	return m;
+}
+
+
+
 class YaseMesh
 {
 	bool					have_ibo = true;
@@ -163,6 +210,18 @@ public:
 		
 	}
 
+	void LoadFromDefModel(YASE::DEF::Model& model)
+	{
+		name = model.name();
+		for (int i = 0; i < model.meshes_size(); i++)
+		{
+			const auto& m = model.meshes(i);
+			YaseMesh ym(m);
+			meshes.emplace_back(m);
+		}
+
+	}
+
 	// Charge depuis la memoire les informations du model (meshes)
 	bool ReadModelInfo(fs::path fullpath)
 	{
@@ -172,24 +231,17 @@ public:
 		YASE::DEF::Model model;
 		if (!model.ParseFromIstream(&inf))
 			return false;
-		name = model.name();
-		for(int i = 0;i<model.meshes_size();i++)
-		{
-			const auto& m = model.meshes(i);
-			YaseMesh ym(m);
-			meshes.emplace_back(m);
-		}
-
+		LoadFromDefModel(model);
 		return true;
 	}
 
 	// Crée les buffer gpu et charge les textures requis depuis le texturemanager
-	void LoadModel(TextureManager& tm)
+	void LoadModel(TextureManager* tm)
 	{
 		vector<uint> tid;
 		for(auto& m : meshes)
 		{
-			tid = tm.loadTexture(m.getNeededTexture());
+			tid = tm->loadTexture(m.getNeededTexture());
 			m.setTextures(tid);
 			m.Allocate();
 		}
@@ -203,9 +255,39 @@ class ModelManager : public AssetManager
 {
 	inline const static string		mesh_folder[2]{ "yase", "obj" };
 
-	std::map<string, Model3D>		map_obj_model;
-	std::map<string, YaseMesh>		map_yase_model;
-	
+	TextureManager*					tex_manager;
+
+	std::map<string, YaseModel>		map_model;
+
+
+public:
+	ModelManager()
+	{
+		
+	}
+
+
+	void Save()
+	{
+		
+	}
+
+
+	void Load()
+	{
+		
+	}
+
+	void AddModel(string name, YaseModel model)
+	{
+		
+	}
+
+	YaseModel*	getLoadedModel(string name)
+	{
+
+		return nullptr;
+	}
 
 
 };

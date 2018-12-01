@@ -5,9 +5,10 @@
 #include "skybox_manager.h"
 #include "camera.h"
 #include <glm/vec3.hpp>
+#include "shaders.h"
 
 
-	class SkyBoxGenerator
+class SkyBoxGenerator
 	{
 		uint vao = 0;
 
@@ -114,9 +115,11 @@
 
 		int					w_height, w_width;
 
+		bool				is_loaded = false;
+		YaseModel			model;
 
 	public:
-		BaseScene(TextureManager* tm, SkyBoxManager* sbm)
+		BaseScene(TextureManager* tm, SkyBoxManager* sbm) 
 		{
 			tex_manager = tm;
 			skybox_manager = sbm;
@@ -135,6 +138,28 @@
 			this->shader_skybox = shader.GetShaderID();
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			sky_box_generator.Allocate();
+
+			YASE::DEF::Model m = getDefaultModel();
+			model.LoadFromDefModel(m);
+
+		}
+
+		void LoadModel()
+		{
+			model.LoadModel(tex_manager);
+			is_loaded = true;
+		}
+
+		void setSceneSize(int w, int h)
+		{
+			w_height = h;
+			w_width = w;
+		}
+
+
+		FPSCamera* getWorkingCamera()
+		{
+			return &work_camera;
 		}
 
 
@@ -163,6 +188,28 @@
 			shader_skybox.setMat4("gVue", view);
 
 			sky_box_generator.Draw(shader_skybox.getID());
+
+			if (is_loaded) {
+				shader_texture.Use();
+				view = work_camera.getLookAt();
+				shader_texture.setMat4("gProjection", projection);
+				shader_texture.setMat4("gVue", view);
+				modele = glm::mat4(1.0);
+				shader_texture.setMat4("gModele", modele);
+				model.Draw(shader_texture.getID());
+			}
+				
+		}
+
+
+		void Save()
+		{
+			
+		}
+
+		void Load()
+		{
+			
 		}
 		
 	};

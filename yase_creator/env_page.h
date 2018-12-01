@@ -6,6 +6,75 @@
 
 #include "env_manager.h"
 
+struct CameraSettings
+{
+	FPSCamera*	camera = nullptr;
+
+	void Draw(bool* p_open = nullptr)
+	{
+		if (*p_open == false)
+			return;
+		static float fov = 70.0f;
+		if(ImGui::Begin("Camera",p_open))
+		{
+				ImGui::TextColored({ 255,255,0,1 }, "Nom : %s", camera->getName().c_str());
+				ImGui::Separator();
+				ImGui::Text("YAW %.2f PITCH %.2f", camera->getYaw(), camera->getPitch());
+				const auto& v = camera->getCameraPosition();
+				const auto& f = camera->getCameraFront();
+				const auto& u = camera->getCameraUp();
+				ImGui::Text("Position X : %.2f Y : %.2f Z : %.2f", v.x, v.y, v.z);
+
+
+				if (ImGui::DragFloat("FOV", &fov, 1, 5, 180))
+				{
+					camera->setFOV(fov);
+				}
+				ImGuiIO& io = ImGui::GetIO();
+				ImGui::Button("Move Front");
+				if (ImGui::IsItemActive())
+				{
+					// Draw a line between the button and the mouse cursor
+					ImDrawList* draw_list = ImGui::GetWindowDrawList();
+					draw_list->PushClipRectFullScreen();
+					draw_list->AddLine(io.MouseClickedPos[0], io.MousePos, ImGui::GetColorU32(ImGuiCol_Button), 4.0f);
+					draw_list->PopClipRect();
+
+					// Drag operations gets "unlocked" when the mouse has moved past a certain threshold (the default threshold is stored in io.MouseDragThreshold)
+					// You can request a lower or higher threshold using the second parameter of IsMouseDragging() and GetMouseDragDelta()
+					ImVec2 value_raw = ImGui::GetMouseDragDelta(0);
+					ImGui::SameLine(); ImGui::Text("WithLockThresold (%.1f, %.1f)", value_raw.x, value_raw.y);
+					camera->move(value_raw.x*1.0f, value_raw.y*1.0f);
+
+					if (io.KeysDown[GLFW_KEY_A]) {
+						camera->left();
+					}
+					if (io.KeysDown[GLFW_KEY_W]) {
+						camera->right();
+					}
+					if (io.KeysDown[GLFW_KEY_S]) {
+						camera->backward();
+					}
+					if (io.KeysDown[GLFW_KEY_D]) {
+						camera->right();
+					}
+					if (io.KeysDown[GLFW_KEY_Q])
+					{
+						camera->down();
+					}
+					if (io.KeysDown[GLFW_KEY_E])
+					{
+						camera->up();
+					}
+				} else
+				{
+					camera->ResetMouse();
+				}
+			}
+			ImGui::End();
+	}
+};
+
 struct TexturePreview
 {
 
@@ -45,18 +114,21 @@ class EnvironmentWindow {
 	bool				assets_panel = false;
 	bool				skybox_panel = true;
 
+	bool				camera_panel = false;
 	bool				textures_preview = false;
 
 	bool				run_main_loop = true;
 	
 	AppLog				log_window;
 	TexturePreview		texture_preview_window;
+	CameraSettings		camera_settings_window;
 
 public:
 	EnvironmentWindow(EnvManager* l) {
 		this->loader = l;
 		this->tex_man = l->getTextureManager();
 		this->sb_man = l->getSkyBoxManager();
+
 	}
 
 	void ShowLogger() {
@@ -98,6 +170,11 @@ public:
 						YASE_LOG_ERROR("Erreur de la sauvegarde de l'environment\n");
 					}
 				}
+
+				if(ImGui::MenuItem("LOL"))
+				{
+					loader->getActiveScene().LoadModel();
+				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Quitter", "Alt+F4"))
 				{
@@ -110,7 +187,10 @@ public:
 			{
 				ImGui::Checkbox("Textures", &textures_panel);
 				ImGui::Checkbox("Shaders", &textures_panel);
-
+				if(ImGui::Checkbox("Camera", &camera_panel))
+				{
+					camera_settings_window.camera = loader->getActiveScene().getWorkingCamera();
+				}
 				ImGui::Separator();
 				ImGui::Checkbox("Logger", &logger_panel);
 				ImGui::EndMenu();
@@ -301,6 +381,7 @@ public:
 		ShowOverlay();
 		ShowTexturePanel();
 		ShowSkyBoxPanel();
+		camera_settings_window.Draw(&camera_panel);
 
 		ImGui::ShowDemoWindow();
 	}

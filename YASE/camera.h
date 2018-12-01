@@ -6,8 +6,15 @@
 #include <vector>
 #include <GL/glew.h>
 
+enum DIRECTION_CAM
+{
+	DIR_LEFT, DIR_RIGHT, DIR_FORWARD, DIR_BACKWARD
+};
+
 class FPSCamera
 {
+	string name = "default";
+
 	glm::vec3 camera_pos = glm::vec3(0.0f, 0.5f, 7.0f);
 	glm::vec3 camera_front = glm::vec3(0.0f, 0.25f, -1.0f);
 	glm::vec3 camera_up = glm::vec3(0.0f, 5.0f, 0.0f);
@@ -27,11 +34,8 @@ class FPSCamera
 
 	glm::vec3	camera_speed = { 0.8f,2.0f,0.8f };
 
+	float	rotate_speed = 1.0f;
 
-
-	float	tx = 1.0f;
-	float	ty = 1.0f;
-	float	tz = 1.0f;
 
 	glm::vec3 getCamForward() const {
 		glm::vec3 camDevant;
@@ -49,6 +53,13 @@ public:
 	{
 		
 	}
+	string getName() { return name; }
+	void setName(string s) { name = s; }
+	const glm::vec3& getCameraPosition() { return camera_pos; }
+	const glm::vec3& getCameraFront() { return camera_front; }
+	const glm::vec3& getCameraUp() { return camera_up; }
+	float getYaw() { return yaw; }
+	float getPitch() { return pitch; }
 
 	glm::mat4 getLookAt() const
 	{
@@ -90,14 +101,19 @@ public:
 		camera_pos -= camera_speed * getCamForward();
 	}
 
+	void ResetMouse()
+	{
+		first_mouse = true;
+	}
+
 	void move(int x, int y)
 	{
-		if (wrap_mouse) {
-			wrap_mouse = false;
-			last_x = x;
-			last_y = y;
-		}
-		else {
+//	if (wrap_mouse) {
+//			wrap_mouse = false;
+//			last_x = x;
+//			last_y = y;
+//		}
+//		else {
 			if (first_mouse) {
 				last_x = x;
 				last_y = y;
@@ -125,29 +141,29 @@ public:
 			front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 			camera_front = glm::normalize(front);
 
-			wrap_mouse = true;
-		}
+//			wrap_mouse = true;
+//		}
 	}
 
 
-	void addTX(float tx)
+	void setCameraSpeed(glm::vec3 v)
 	{
-		this->tx += tx;
+		camera_speed = v;
 	}
 
-	void addTY(float ty)
+	const glm::vec3& getCameraSpeed() const
 	{
-		this->ty += ty;
-	}
-
-	glm::vec3 getT() const
-	{
-		return { tx,ty,tz };
+		return camera_speed;
 	}
 
 	void addFOV(float v)
 	{
 		fov += v;
+	}
+
+	void setFOV(float v)
+	{
+		fov = v;
 	}
 
 	float getFOV()
