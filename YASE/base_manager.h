@@ -8,7 +8,19 @@
 #include <iostream>
 #include <fstream>
 
+
 namespace fs = std::filesystem;
+using namespace std;
+
+struct RootFolderNotConfigure : public std::exception {
+
+	string	asset_manager_name;
+
+	const char* what() const throw() {
+		return ("Le repertoire de " + asset_manager_name + " n'est pas configurer").c_str();
+	}
+};
+
 
 class AssetManager
 {

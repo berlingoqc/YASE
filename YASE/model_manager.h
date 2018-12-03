@@ -16,6 +16,7 @@
 #include "base_manager.h"
 #include "texture_manager.h"
 #include "mesh.h"
+#include "mesh.pb.h"
 
 namespace fs = std::filesystem;
 using namespace std;
@@ -33,6 +34,7 @@ static glm::vec2	tex_bas[4]
 {
 	{0.0,0.0}, {100,0}, {0,100}, {100,100}
 };
+
 
 inline YASE::DEF::Model getDefaultModel()
 {
@@ -195,10 +197,13 @@ public:
 class YaseModel
 {
 	string					name;
+	bool					has_been_update = false;
 
 	std::vector<YaseMesh>	meshes;
 
 public:
+
+	bool hasBeenUpdate() { return has_been_update; }
 
 	// Draw dessine le model avec le shader donner
 	void Draw(uint shader)
@@ -235,7 +240,7 @@ public:
 		return true;
 	}
 
-	// Crée les buffer gpu et charge les textures requis depuis le texturemanager
+	// Crï¿½e les buffer gpu et charge les textures requis depuis le texturemanager
 	void LoadModel(TextureManager* tm)
 	{
 		vector<uint> tid;
@@ -251,13 +256,18 @@ public:
 
 
 
+
 class ModelManager : public AssetManager
 {
 	inline const static string		mesh_folder[2]{ "yase", "obj" };
 
 	TextureManager*					tex_manager;
 
-	std::map<string, YaseModel>		map_model;
+	// Une map qui contient tous mes models que je possede
+	// dans mon arborscence. La liste est loader au demarrage
+	// et les assets du model sont loader quand on n'a besoin
+	// et les textures sont entreposer dans TextureManager
+	std::map<string, YaseModel*>		map_model;
 
 
 public:
@@ -267,26 +277,81 @@ public:
 	}
 
 
-	void Save()
+	// Sauvegarde seulement la liste des cle de nos models
+	// le reste sont dans des fichier avec le nom de la clÃ©
+	// du modele
+	bool Save()
+	{
+		if(root_folder.empty()) {
+			return false;
+		}
+		YASE::DEF::ModelList ml;
+		for(const auto& m : map_model) {
+			// Regarde si un model a ete update si oui on ecrase l'ancien fichier
+			auto* model = m.second;
+			ml.add_models(m.first);
+		}
+		// Valide que tous nos modeles sauvegarder existe bien ?
+		ofstream of((root_folder / file_name).string(), std::ios::binary);
+		if(!of.is_open()) {
+			return false;
+		}
+		bool b = ml.SerializeToOstream(&of);
+		of.close();
+		return b;
+		
+	}
+
+	bool Load()
+	{
+		ifstream inf((root_folder / file_name).string(), std::ios::binary | std::ios::in);
+		if(!inf.is_open())
+		{
+			return false;
+		}
+		YASE::DEF::ModelList ml;
+		if(!ml.ParseFromIstream(&inf))
+		{
+			return false;
+		}
+		for(int i = 0;i < ml.models_size();i++)
+		{
+			map_model[ml.models(i)] = nullptr;
+		}
+
+		return true;
+	}
+
+	// Valide que tous les models present dans le fichier exists dans le repertoire
+	bool ValidIntegrity()
+	{
+		
+		return false;
+	}
+
+	// Import un model d'un autre type de fichier dans mon mode de fichier avec ce qu'assimp supporte
+	void ImportModel(string name, fs::path filepath)
 	{
 		
 	}
 
-
-	void Load()
-	{
-		
-	}
-
+	// Ajout un yasemodel existant dans la collection. Le sauvegarde tout de suite. C'est la fonction qui s'occupe de ca
 	void AddModel(string name, YaseModel model)
 	{
 		
 	}
 
+	// Retourne le pointeur d'un model deja loader. ( Le load si besoin )
 	YaseModel*	getLoadedModel(string name)
 	{
 
 		return nullptr;
+	}
+
+	// Efface le model de la memoire de gpu ( quand on n'a plus besoin , faudrait je garde le nombre de reference )
+	void releaseModel(string name)
+	{
+		
 	}
 
 

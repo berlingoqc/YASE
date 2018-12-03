@@ -10,6 +10,14 @@
 #include "home.h"
 #include "env_page.h"
 
+/*
+ *	Truc a finir asap
+ *	
+ *	1 - Finir mon model manager. Avec le convetissement de .obj et l'ajout de leur texture dans le texture manager. Ma commencer avec mon cube blender
+ *  2 - Faire le scene manager. Avec la sauvegarde de l'environnement et comment je vais representer mes donners.
+ *
+ */
+
 using namespace std;
 
 static void glfw_error_callback(int error, const char* description)

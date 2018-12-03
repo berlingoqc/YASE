@@ -11,8 +11,6 @@ target_link_libraries(yase_creator
 	crazygl
 	imgui
 	proto
-	libprotobufd
-	libprotocd
 	${OPENGL_LIBRARY}
 	${GL_LIBS}
 )

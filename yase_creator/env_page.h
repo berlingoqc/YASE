@@ -50,7 +50,7 @@ struct CameraSettings
 						camera->left();
 					}
 					if (io.KeysDown[GLFW_KEY_W]) {
-						camera->right();
+						camera->forward();
 					}
 					if (io.KeysDown[GLFW_KEY_S]) {
 						camera->backward();
@@ -101,20 +101,22 @@ struct TexturePreview
 	
 };
 
-
 class EnvironmentWindow {
 
 	EnvManager*			loader;
 	TextureManager*		tex_man;
 	SkyBoxManager*		sb_man;
 
-	bool				shader_panel = false;
 	bool				logger_panel = false;
-	bool				textures_panel = true;
-	bool				assets_panel = false;
-	bool				skybox_panel = true;
 
+	bool				shader_panel = false;
+	bool				textures_panel = true;
+	bool				model_panel = false;
+	bool				skybox_panel = true;
 	bool				camera_panel = false;
+	bool				scene_panel = false;
+
+
 	bool				textures_preview = false;
 
 	bool				run_main_loop = true;
@@ -178,20 +180,34 @@ public:
 				ImGui::Separator();
 				if (ImGui::MenuItem("Quitter", "Alt+F4"))
 				{
+					// TODO : regarder si l'environnement a changer et demande si on veut sauvgarder avec de quitter
 					run_main_loop = false;
 				}
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Fenetre"))
+			if (ImGui::BeginMenu("Environment"))
 			{
-				ImGui::Checkbox("Textures", &textures_panel);
-				ImGui::Checkbox("Shaders", &textures_panel);
+				ImGui::TextColored({ 255,255,0,1 }, "Fenetre");
+				ImGui::Checkbox("Texture", &textures_panel);
+				ImGui::Checkbox("Shader", &shader_panel);
+				ImGui::Checkbox("Skybox", &skybox_panel);
+				ImGui::Checkbox("Model", &model_panel);
+				ImGui::Separator();
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Scene"))
+			{
+				ImGui::TextColored({ 255,255,0,1 }, "Fenetre");
+				if (ImGui::Checkbox("Scene", &scene_panel));
 				if(ImGui::Checkbox("Camera", &camera_panel))
 				{
 					camera_settings_window.camera = loader->getActiveScene().getWorkingCamera();
 				}
-				ImGui::Separator();
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Aide"))
+			{
 				ImGui::Checkbox("Logger", &logger_panel);
 				ImGui::EndMenu();
 			}
@@ -382,7 +398,7 @@ public:
 		ShowTexturePanel();
 		ShowSkyBoxPanel();
 		camera_settings_window.Draw(&camera_panel);
-
+		ImGui::ShowDemoWindow();
 		ImGui::ShowDemoWindow();
 	}
 

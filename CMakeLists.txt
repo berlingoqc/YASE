@@ -31,14 +31,12 @@ set(FB_LIBRARY "" CACHE PATH "The directory that contains flatbuffers.lib" )
 include (FindProtobuf)
 Find_Package (Protobuf REQUIRED)
 
+set( GL_LIBS glew32d glfw3 SOIL assimp-vc140-mt libprotobufd libprotocd)
 if(win32)
-	set( GL_LIBS glew32 glfw3 glad SOIL assimp-vc140-mt )
-else(win32)
-	set( GL_LIBS GL glut GLU GLEW stdc++fs )
-endif(win32)
+	set( GL_LIBS GL GLEW glfw SOIL stdc++fs ${PROTOBUF_LIBRARY})
+endif()
 
 
-set( GL_LIBS glew32d glfw3 SOIL assimp-vc140-mt flatbuffers )
 
 include_directories(
 	${GLEW_INCLUDE_PATH}
