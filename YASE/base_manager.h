@@ -12,12 +12,12 @@
 namespace fs = std::filesystem;
 using namespace std;
 
-struct RootFolderNotConfigure : public std::exception {
+struct FileDontExist : public std::exception {
 
-	string	asset_manager_name;
+	string	file;
 
 	const char* what() const throw() {
-		return ("Le repertoire de " + asset_manager_name + " n'est pas configurer").c_str();
+		return ("Le fichier " + file + " n'exsite pas").c_str();
 	}
 };
 
@@ -28,9 +28,36 @@ protected:
 	fs::path		root_folder;
 	std::string		file_name;
 
+private:
 
+	void ValidFile(const fs::path& fn) {
+		if (root_folder.empty()) {
+			FileDontExist e;
+			e.file = fn.string();
+			throw e;
+		}
+	}
 
 public:
+	virtual void saveManager(ostream* writer) { }
+	virtual void loadManager(ifstream* reader) { }
+
+	void Save() {
+		const fs::path fn = getFileFullPath();
+		ValidFile(fn);
+		ofstream of(getFileFullPath(), ios::binary);
+		saveManager(&of);
+		of.close();
+	}
+
+	void Load() {
+		const fs::path fn = getFileFullPath();
+		ValidFile(fn);
+		ifstream inf(fn.string(), std::ios::binary | std::ios::in);
+		loadManager(&inf);
+		inf.close();
+	}
+
 	void setRootFolder(fs::path rf)
 	{
 		root_folder = rf;

@@ -115,6 +115,9 @@ public:
 			// Ma section de rendering
 
 
+			
+
+			// Affiche les overlay selon dans qu'elle monde on aie
 			switch (state)
 			{
 			case HOME_PAGE:

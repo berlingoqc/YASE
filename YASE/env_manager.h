@@ -13,8 +13,8 @@
 #include "shader_manager.h"
 #include "model_manager.h"
 #include "skybox_manager.h"
-
-#include "scene.h"
+#include "sound_manager.h"
+#include "scene_manager.h"
 
 #include "base.pb.h"
 #include "env.pb.h"
@@ -27,7 +27,7 @@ namespace fs = std::filesystem;
 
 	class EnvManager
 	{
-		inline static string folders[5] { "texture", "skybox", "mesh", "asset", "sound" };
+		inline static string folders[6] { "texture", "skybox", "model","shader", "sound", "scene"};
 		inline static string env_file_name = "env.yase";
 
 		fs::path			root_folder;
@@ -35,11 +35,22 @@ namespace fs = std::filesystem;
 
 		TextureManager		texture_manager;
 		SkyBoxManager		skybox_manager;
+		ModelManager		model_manager;
 		ShadersManager		shader_manager;
+		SoundManager		sound_manager;
 
-		vector<BaseScene>	scene;
-		int					active_scene = 0;
+		SceneManager		scene_manager;
 
+
+
+		void initFolderManager() {
+			texture_manager.setRootFolder(root_folder / folders[0]);
+			skybox_manager.setRootFolder(root_folder / folders[1]);
+			model_manager.setRootFolder(root_folder / folders[2]);
+			shader_manager.setRootFolder(root_folder / folders[3]);
+			sound_manager.setRootFolder(root_folder / folders[4]);
+			scene_manager.setRootFolder(root_folder / folders[5]);
+		}
 
 	public:
 		fs::path getRootFolder() {
@@ -59,10 +70,22 @@ namespace fs = std::filesystem;
 			return &skybox_manager;
 		}
 
-		BaseScene&	getActiveScene()
-		{
-			return scene[0];
+		ModelManager* getModelManager() {
+			return &model_manager;
 		}
+
+		ShadersManager* getShaderManager() {
+			return &shader_manager;
+		}
+
+		SoundManager* getSoundManager() {
+			return &sound_manager;
+		}
+
+		SceneManager* getSceneManager() {
+			return &scene_manager;
+		}
+
 
 		EnvManager()
 		{
@@ -82,17 +105,18 @@ namespace fs = std::filesystem;
 				if (!fs::create_directory(nf))
 					return false;
 			}
-			root_folder = directory;
+			this->root_folder = directory;
 			this->name = name;
 
-			texture_manager.setRootFolder(root_folder / folders[0]);
-			skybox_manager.setRootFolder(root_folder / folders[1]);
-			if (!texture_manager.Save())
-				return false;
-			if (!skybox_manager.Save())
-				return false;
-			BaseScene b(&texture_manager, &skybox_manager);
-			scene.emplace_back(b);
+			initFolderManager();
+
+			texture_manager.Save();
+			skybox_manager.Save();
+			model_manager.Save();
+			shader_manager.Save();
+			sound_manager.Save();
+			scene_manager.Save();
+
 			return save();
 		}
 
@@ -108,9 +132,14 @@ namespace fs = std::filesystem;
 			ofstream of(fn.string(), std::ios::binary);
 			if (!env.SerializeToOstream(&of))
 				return false;
-			if (!skybox_manager.Save())
-				return false;
-			return texture_manager.Save();
+			skybox_manager.Save();
+			texture_manager.Save();
+			shader_manager.Save();
+			model_manager.Save();
+			sound_manager.Save();
+			scene_manager.Save();
+
+			return true;
 		}
 
 		bool load(fs::path filepath) {
@@ -122,18 +151,20 @@ namespace fs = std::filesystem;
 			if (!env.ParseFromIstream(&inf))
 				return false;
 			inf.close();
+
 			this->name = env.name();
 			this->root_folder = filepath.parent_path();
 
-			fs::path tex_root = this->root_folder / folders[0];
-			texture_manager.setRootFolder(tex_root);
-			tex_root = this->root_folder / folders[1];
-			skybox_manager.setRootFolder(tex_root);
-			if (!skybox_manager.Load())
-				return false;
-			BaseScene b(&texture_manager, &skybox_manager);
-			scene.emplace_back(b);
-			return texture_manager.Load();
+			initFolderManager();
+
+			texture_manager.Load();
+			skybox_manager.Load();
+			shader_manager.Load();
+			model_manager.Load();
+			sound_manager.Load();
+			scene_manager.Load();
+
+			return true;
 		}
 	};
 

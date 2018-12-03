@@ -15,12 +15,35 @@ class SkyBoxManager : public AssetManager
 	ENGINE::MyTexture												texture_loader;
 	MapSkyBox														boxes;
 	int																loaded_skybox_index = 0;
-
+	
 public:
+	virtual void saveManager(ostream* writer) {
+		YASE::DEF::SkyBoxManager m;
+		for (const auto& i : boxes)
+		{
+			auto b = m.add_boxs();
+			*b = std::get<0>(i.second);
+		}
+		if (!m.SerializeToOstream(writer)) {
+
+		}
+	}
+
+	virtual void loadManager(ifstream* reader) {
+		YASE::DEF::SkyBoxManager m;
+		if (!m.ParseFromIstream(reader)) {
+
+		}
+		for (int i = 0; i < m.boxs_size(); i++)
+		{
+			auto e = m.boxs(i);
+			boxes[e.name()] = std::make_tuple(e, ERROR_TEXTURE);
+		}
+	}
+
 	SkyBoxManager() : texture_loader(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, GL_RGB)
 	{
 		file_name = "skybox.yase";
-		
 	}
 
 	int getNumberSkyBox() const
@@ -44,44 +67,6 @@ public:
 	const MapSkyBox& getMapSkyBox() const
 	{
 		return boxes;
-	}
-
-
-
-	bool Save()
-	{
-		if (root_folder.empty())
-			return false;
-		YASE::DEF::SkyBoxManager m;
-		for(const auto& i : boxes)
-		{
-			auto b = m.add_boxs();
-			*b = std::get<0>(i.second);
-		}
-		std::ofstream of(getFileFullPath().string(), std::ios::binary);
-		if (!of.is_open())
-			return false;
-		bool b = m.SerializeToOstream(&of);
-		of.close();
-		return b;
-	}
-
-
-	bool Load()
-	{
-		std::ifstream inf(getFileFullPath(), std::ios::binary | std::ios::in);
-		if (!inf.is_open())
-			return false;
-		YASE::DEF::SkyBoxManager m;
-		if (!m.ParseFromIstream(&inf))
-			return false;
-		for(int i = 0;i<m.boxs_size();i++)
-		{
-			auto e = m.boxs(i);
-			boxes[e.name()] = std::make_tuple(e, ERROR_TEXTURE);
-		}
-		
-		return true;
 	}
 
 

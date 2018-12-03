@@ -1,105 +1,7 @@
 #ifndef ENV_PAGE_H
 #define ENV_PAGE_H
 
-#include "imgui_other.h"
-#include "logger.h"
-
-#include "env_manager.h"
-
-struct CameraSettings
-{
-	FPSCamera*	camera = nullptr;
-
-	void Draw(bool* p_open = nullptr)
-	{
-		if (*p_open == false)
-			return;
-		static float fov = 70.0f;
-		if(ImGui::Begin("Camera",p_open))
-		{
-				ImGui::TextColored({ 255,255,0,1 }, "Nom : %s", camera->getName().c_str());
-				ImGui::Separator();
-				ImGui::Text("YAW %.2f PITCH %.2f", camera->getYaw(), camera->getPitch());
-				const auto& v = camera->getCameraPosition();
-				const auto& f = camera->getCameraFront();
-				const auto& u = camera->getCameraUp();
-				ImGui::Text("Position X : %.2f Y : %.2f Z : %.2f", v.x, v.y, v.z);
-
-
-				if (ImGui::DragFloat("FOV", &fov, 1, 5, 180))
-				{
-					camera->setFOV(fov);
-				}
-				ImGuiIO& io = ImGui::GetIO();
-				ImGui::Button("Move Front");
-				if (ImGui::IsItemActive())
-				{
-					// Draw a line between the button and the mouse cursor
-					ImDrawList* draw_list = ImGui::GetWindowDrawList();
-					draw_list->PushClipRectFullScreen();
-					draw_list->AddLine(io.MouseClickedPos[0], io.MousePos, ImGui::GetColorU32(ImGuiCol_Button), 4.0f);
-					draw_list->PopClipRect();
-
-					// Drag operations gets "unlocked" when the mouse has moved past a certain threshold (the default threshold is stored in io.MouseDragThreshold)
-					// You can request a lower or higher threshold using the second parameter of IsMouseDragging() and GetMouseDragDelta()
-					ImVec2 value_raw = ImGui::GetMouseDragDelta(0);
-					ImGui::SameLine(); ImGui::Text("WithLockThresold (%.1f, %.1f)", value_raw.x, value_raw.y);
-					camera->move(value_raw.x*1.0f, value_raw.y*1.0f);
-
-					if (io.KeysDown[GLFW_KEY_A]) {
-						camera->left();
-					}
-					if (io.KeysDown[GLFW_KEY_W]) {
-						camera->forward();
-					}
-					if (io.KeysDown[GLFW_KEY_S]) {
-						camera->backward();
-					}
-					if (io.KeysDown[GLFW_KEY_D]) {
-						camera->right();
-					}
-					if (io.KeysDown[GLFW_KEY_Q])
-					{
-						camera->down();
-					}
-					if (io.KeysDown[GLFW_KEY_E])
-					{
-						camera->up();
-					}
-				} else
-				{
-					camera->ResetMouse();
-				}
-			}
-			ImGui::End();
-	}
-};
-
-struct TexturePreview
-{
-
-	void Draw(uint text_id, bool* p_open = nullptr)
-	{
-		static int img_size[2]{ 200, 200};
-		if(text_id != ERROR_TEXTURE && *p_open)
-		{
-			if(ImGui::Begin("Apercu texture",p_open))
-			{
-				ImGui::DragInt2("Grandeur", img_size, 1, 10, 800);
-				ImGui::Separator();
-				if (text_id != ERROR_TEXTURE)
-				{
-					ImGui::Image((void*)text_id, ImVec2(img_size[0], img_size[1]));
-				}
-
-				ImGui::End();
-			}
-
-		}
-		
-	}
-	
-};
+#include "other_page.h"
 
 class EnvironmentWindow {
 
@@ -124,13 +26,14 @@ class EnvironmentWindow {
 	AppLog				log_window;
 	TexturePreview		texture_preview_window;
 	CameraSettings		camera_settings_window;
+	ModelManager_Panel  model_manager_window;
 
 public:
 	EnvironmentWindow(EnvManager* l) {
 		this->loader = l;
 		this->tex_man = l->getTextureManager();
 		this->sb_man = l->getSkyBoxManager();
-
+		model_manager_window.model_manager = l->getModelManager();
 	}
 
 	void ShowLogger() {
@@ -175,7 +78,13 @@ public:
 
 				if(ImGui::MenuItem("LOL"))
 				{
-					loader->getActiveScene().LoadModel();
+					ModelManager* mm = loader->getModelManager();
+					try {
+						mm->AddModel("ground", getDefaultModel());
+					}
+					catch (const ModelException& ex) {
+						YASE_LOG_ERROR(ex.what());
+					}
 				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Quitter", "Alt+F4"))
@@ -192,7 +101,9 @@ public:
 				ImGui::Checkbox("Texture", &textures_panel);
 				ImGui::Checkbox("Shader", &shader_panel);
 				ImGui::Checkbox("Skybox", &skybox_panel);
-				ImGui::Checkbox("Model", &model_panel);
+				if (ImGui::Checkbox("Model", &model_panel)) {
+					model_manager_window.show = model_panel;
+				}
 				ImGui::Separator();
 				ImGui::EndMenu();
 			}
@@ -202,7 +113,7 @@ public:
 				if (ImGui::Checkbox("Scene", &scene_panel));
 				if(ImGui::Checkbox("Camera", &camera_panel))
 				{
-					camera_settings_window.camera = loader->getActiveScene().getWorkingCamera();
+					//camera_settings_window.camera = loader->getActiveScene().getWorkingCamera();
 				}
 				ImGui::EndMenu();
 			}
@@ -375,7 +286,7 @@ public:
 				{
 					if (!selected_skybox.empty())
 					{
-						loader->getActiveScene().setActiveSkybox(selected_skybox);
+						//loader->getActiveScene().setActiveSkybox(selected_skybox);
 					}
 
 				}
@@ -389,8 +300,7 @@ public:
 			*over = true;
 		}
 
-
-		loader->getActiveScene().Draw();
+		//loader->getActiveScene().Draw();
 
 		ShowMenuBar();
 		ShowLogger();
@@ -398,7 +308,7 @@ public:
 		ShowTexturePanel();
 		ShowSkyBoxPanel();
 		camera_settings_window.Draw(&camera_panel);
-		ImGui::ShowDemoWindow();
+		model_manager_window.Draw();
 		ImGui::ShowDemoWindow();
 	}
 

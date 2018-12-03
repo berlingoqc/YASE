@@ -254,11 +254,29 @@ public:
 	
 };
 
+struct ModelException : public std::exception {
+
+	bool exists;
+	string name;
+
+	ModelException(bool e, string n) {
+		exists = e;
+		name = n;
+	}
+
+	const char* what() const throw() {
+		if (exists)
+			return (("Le model exists deja " + name).c_str());
+		return (("Le model n'existe pas " + name).c_str());
+	}
+};
+
 
 
 
 class ModelManager : public AssetManager
 {
+	inline const static string		extension_model = ".model";
 	inline const static string		mesh_folder[2]{ "yase", "obj" };
 
 	TextureManager*					tex_manager;
@@ -268,65 +286,59 @@ class ModelManager : public AssetManager
 	// et les assets du model sont loader quand on n'a besoin
 	// et les textures sont entreposer dans TextureManager
 	std::map<string, YaseModel*>		map_model;
+	int									index_loaded_model = 0;
 
 
 public:
-	ModelManager()
-	{
-		
-	}
 
-
-	// Sauvegarde seulement la liste des cle de nos models
-	// le reste sont dans des fichier avec le nom de la clé
-	// du modele
-	bool Save()
-	{
-		if(root_folder.empty()) {
-			return false;
-		}
+	virtual void saveManager(ostream* writer) {
 		YASE::DEF::ModelList ml;
-		for(const auto& m : map_model) {
-			// Regarde si un model a ete update si oui on ecrase l'ancien fichier
+		for (const auto& m : map_model) {
+			// TODO : Regarde si un model a ete update si oui on ecrase l'ancien fichier
 			auto* model = m.second;
 			ml.add_models(m.first);
 		}
-		// Valide que tous nos modeles sauvegarder existe bien ?
-		ofstream of((root_folder / file_name).string(), std::ios::binary);
-		if(!of.is_open()) {
-			return false;
+		if (!ml.SerializeToOstream(writer)) {
+
 		}
-		bool b = ml.SerializeToOstream(&of);
-		of.close();
-		return b;
-		
 	}
 
-	bool Load()
-	{
-		ifstream inf((root_folder / file_name).string(), std::ios::binary | std::ios::in);
-		if(!inf.is_open())
-		{
-			return false;
-		}
+	virtual void loadManager(ifstream* reader) {
 		YASE::DEF::ModelList ml;
-		if(!ml.ParseFromIstream(&inf))
+		if (!ml.ParseFromIstream(reader))
 		{
-			return false;
+			
 		}
-		for(int i = 0;i < ml.models_size();i++)
+		for (int i = 0; i < ml.models_size(); i++)
 		{
 			map_model[ml.models(i)] = nullptr;
 		}
-
-		return true;
+		ValidIntegrity();
 	}
 
+	ModelManager()
+	{
+		file_name = "model.yase";
+		
+	}
+
+	const std::map<string, YaseModel*>&	getModelMap() {
+		return map_model;
+	}
+
+	int getNumberModel() {
+		return map_model.size();
+	}
+
+	int getNumberLoadedModel() {
+		return index_loaded_model;
+	}
+
+
 	// Valide que tous les models present dans le fichier exists dans le repertoire
-	bool ValidIntegrity()
+	void ValidIntegrity()
 	{
 		
-		return false;
 	}
 
 	// Import un model d'un autre type de fichier dans mon mode de fichier avec ce qu'assimp supporte
@@ -336,16 +348,44 @@ public:
 	}
 
 	// Ajout un yasemodel existant dans la collection. Le sauvegarde tout de suite. C'est la fonction qui s'occupe de ca
-	void AddModel(string name, YaseModel model)
+	void AddModel(string name, YASE::DEF::Model model)
 	{
-		
+		// Regarde qu'il existe pas deja
+		const auto& v = map_model.find(name);
+		if (v != map_model.end())
+			throw ModelException(true, name);
+		name = name.append(extension_model);
+		fs::path fp = root_folder / name;
+		ofstream of(fp.string(), ios::binary);
+		if (!of.is_open()) {
+			return;
+		}
+		if (!model.SerializePartialToOstream(&of)) {
+			return;
+		}
+		of.close();
+		map_model[name] = nullptr;
+		// devrait essayer de le loader tout suite quand on l'ajoute
 	}
 
 	// Retourne le pointeur d'un model deja loader. ( Le load si besoin )
 	YaseModel*	getLoadedModel(string name)
 	{
-
-		return nullptr;
+		auto& v = map_model.find(name);
+		if (v == map_model.end()) {
+			// Model n'existe pas
+			throw ModelException(false, name);
+		}
+		if(v->second == nullptr) {
+			YaseModel* ym = new YaseModel();
+			name = name.append(extension_model);
+			fs::path fp = root_folder / name;
+			if (!ym->ReadModelInfo(fp)) {
+				return nullptr;
+			}
+			v->second = ym;
+		}
+		return v->second;
 	}
 
 	// Efface le model de la memoire de gpu ( quand on n'a plus besoin , faudrait je garde le nombre de reference )

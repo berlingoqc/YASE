@@ -83,7 +83,7 @@ public:
 						}
 						else {
 							ImVec2 v = ImGui::GetIO().DisplaySize;
-							loader->getActiveScene().setSceneSize(v.x, v.y);
+							//loader->getActiveScene().setSceneSize(v.x, v.y);
 							*over = true;
 						}
 				}

@@ -20,20 +20,44 @@ using namespace std;
 // TextureManager s'occupe de gerrer nos textures et de loader
 // ceux qu'on veut utiliser quand le temps est venu
 class TextureManager : public AssetManager {
-	inline static string				text_file_name = "tex.yase";
 	int									index_texture = 0;
 	ENGINE::MyTexture					texture_loader; // Classe pour charger les textures
 	std::vector<YASE::DEF::Texture>		textures; // Liste de nos textures dans notre repertoire 
 	std::vector<std::string>			categories;
 	std::map<int, uint>					loaded_textures; // Liste des textures loader dans openGL, Key c'est leur ID
 
-	fs::path							texture_root; // Dossier root ou les textures sont entreposer
-
 	bool								is_loaded = false;
 
 public:
+	virtual void saveManager(ostream* writer) {
+		YASE::DEF::TextureManager tm;
+		tm.set_index(index_texture);
+		for (auto i : textures)
+		{
+			auto* t = tm.add_textures();
+			*t = i;
+		}
+		if (!tm.SerializeToOstream(writer)){
+
+		}
+	}
+
+	virtual void loadManager(ifstream* reader) {
+		YASE::DEF::TextureManager env;
+		if (!env.ParseFromIstream(reader)) {
+		}
+		this->index_texture = env.index();
+		for (int i = 0; i < env.textures_size(); i++)
+		{
+			if (env.textures(i).name().empty())
+				continue;
+			this->textures.emplace_back(env.textures(i));
+		}
+	}
+
 	TextureManager() :
 		texture_loader(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, GL_RGB) {
+		file_name = "tex.yase";
 	}
 
 	int getCurrentIndex()
@@ -44,11 +68,6 @@ public:
 	bool isLoaded() const
 	{
 		return is_loaded;
-	}
-
-	void setRootFolder(fs::path root)
-	{
-		texture_root = root;
 	}
 
 	vector<YASE::DEF::Texture>&	getTextures()
@@ -95,49 +114,6 @@ public:
 		return v->second;
 	}
 
-
-	bool Save()
-	{
-		if (texture_root.empty())
-				return false;
-		YASE::DEF::TextureManager tm;
-		tm.set_index(index_texture);
-		for(auto i : textures)
-		{
-			auto* t = tm.add_textures();
-			*t = i;
-		}
-		fs::path fn = texture_root / text_file_name;
-		ofstream of(fn.string(), std::ios::binary);
-		if (!of.is_open())
-			return false;
-		bool b = tm.SerializeToOstream(&of);
-		of.close();
-		return b;
-	}
-
-	bool Load()
-	{
-		fs::path fn = texture_root / text_file_name;
-		ifstream inf;
-		inf.open(fn.string(), ios::binary | std::ios::in);
-		if (!inf.is_open())
-			return false;
-		YASE::DEF::TextureManager env;
-		if (!env.ParseFromIstream(&inf))
-			return false;
-		inf.close();
-		this->index_texture = env.index();
-		for(int i = 0;i<env.textures_size();i++)
-		{
-			if (env.textures(i).name().empty())
-				continue;
-			this->textures.emplace_back(env.textures(i));
-		}
-
-		return true;
-	}
-
 	vector<uint> loadTexture(vector<int> index)
 	{
 		vector<uint> v;
@@ -158,7 +134,7 @@ public:
 			return getTexGLID(index);
 		}
 		auto v = getTexture(index);
-		fs::path p = texture_root / v.category();
+		fs::path p = root_folder / v.category();
 		p = p / v.name();
 		uint tid = texture_loader.GetTexture(p.string());
 		if (tid == ERROR_TEXTURE)
@@ -175,7 +151,7 @@ public:
 	bool AddNewTexture(fs::path filepath, string category = "default") {
 		if (!fs::exists(filepath))
 			return false;
-		fs::path dest = texture_root / category;
+		fs::path dest = root_folder / category;
 		if (!fs::exists(dest)) {
 			YASE_LOG_INFO(("Creation du repertoire pour la categorie " + category).c_str());
 			if (!fs::create_directory(dest)) {
