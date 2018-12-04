@@ -2,10 +2,11 @@
 #define SCENE_MANAGER_H
 #include "texture_manager.h"
 #include "skybox_manager.h"
-#include "skybox_manager.h"
+#include "model_manager.h"
 #include "camera.h"
 #include <glm/vec3.hpp>
 #include "shaders.h"
+#include "scene.pb.h"
 
 
 class SkyBoxGenerator
@@ -96,39 +97,96 @@ class SkyBoxGenerator
 
 	};
 
+struct MatriceModel
+{
+	glm::vec3	translation;
+	glm::vec3	scale;
+	glm::vec3	rotation;
+	float		angle_rotation;
+};
+
+struct KeyFrame
+{
+	float			timestamp;
+	MatriceModel	transformation;
+};
+
+struct AnimationModel
+{
+	string				name;
+	string				model_key;
+
+	vector<KeyFrame>	frames;
+	float				total_length;
+};
+
+struct StaticModel
+{
+	// Champs pour la serialisation 
+	string model_key; 
+	MatriceModel transformation;
+
+	// Valeur Obtenue
+	glm::mat4	mat_model;
+
+	YaseModel*	model;
+
+	void updateModel()
+	{
+				// Calcul ca matrice model
+		mat_model = glm::mat4(1.0f);
+		mat_model = glm::translate(mat_model, transformation.translation); // translate it down so it's at the center of the scene
+		mat_model = glm::rotate(mat_model, glm::radians(transformation.angle_rotation), transformation.rotation);
+		mat_model = glm::scale(mat_model, transformation.scale);	// it's a bit too big for our scene, so scale it down
+	}
+
+	void loadStaticModel(ModelManager* mm)
+	{
+		// Va cherche le pointeur de notre model
+		model = mm->getLoadedModel(model_key);
+		if(model == nullptr)
+		{
+			YASE_LOG_ERROR(("Impossible de charger le model " + model_key).c_str());
+		}
+
+		updateModel();
+
+	}
+};
 
 class BaseScene
 {
-	vector<string>				needed_model; // Les cles des models requis
-	vector<string>				needed_skybox; // Les cles des skybox requis
-	vector<int>					needed_texture; // Les cles des texture requise
+public:
+	string							name;
+
+	vector<string>					needed_model; // Les cles des models requis
 
 	// Get le pointeur vers les manager pour loader nos assets et nos shits
-	TextureManager*				tex_manager;
-	SkyBoxManager*				skybox_manager;
-	ModelManager*				model_manager;
+	TextureManager*					tex_manager = nullptr;
+	SkyBoxManager*					skybox_manager = nullptr;
+	ModelManager*					model_manager = nullptr;
 
 	// Generator qui s'occupe d'afficher notre skybox selectionner
-	SkyBoxGenerator				sky_box_generator;
+	SkyBoxGenerator					sky_box_generator;
 	
 	// Nom de la skybox active
-	string						active_skybox;
+	string							active_skybox;
 
-	FPSCamera					work_camera;
-	map<string,FPSCamera>		scene_cameas;
+	FPSCamera						work_camera;
+	map<string,FPSCamera>			scene_cameas;
 
-	ENGINE::Shrapper			shader_texture;
-	ENGINE::Shrapper			shader_skybox;
+	ENGINE::Shrapper				shader_texture;
+	ENGINE::Shrapper				shader_skybox;
 
-	int							w_height, w_width;
+	int								w_height, w_width;
 
-	bool						is_loaded = false;
+	bool							is_loaded = false;
+
+	map<string, StaticModel>		env_model_map; // Contient les models static qui compose l'environnement de la scene
 
 public:
-	BaseScene(TextureManager* tm, SkyBoxManager* sbm) 
+	BaseScene()
 	{
-		tex_manager = tm;
-		skybox_manager = sbm;
 		ENGINE::MyShader shader;
 		if (!shader.OpenMyShader("default_shaders/vert_shader.glsl", "default_shaders/frag_shader.glsl"))
 		{
@@ -144,8 +202,12 @@ public:
 		this->shader_skybox = shader.GetShaderID();
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		sky_box_generator.Allocate();
-
-
+	}
+	BaseScene(TextureManager* tm, SkyBoxManager* sbm, ModelManager* mm, int height, int width)  : BaseScene()
+	{
+		tex_manager = tm;
+		skybox_manager = sbm;
+		model_manager = mm;
 	}
 
 	void setSceneSize(int w, int h)
@@ -155,14 +217,27 @@ public:
 	}
 
 
+	// Retourne le pointeur de la camera de l'environnement
 	FPSCamera* getWorkingCamera()
 	{
 		return &work_camera;
 	}
 
+	// Retourne le pointeur d'une des camera de la scene , si elle existe
+	FPSCamera* getSceneCamera(string name)
+	{
+		
+		return nullptr;
+	}
+		
 
 	void setActiveSkybox(string name)
 	{
+		if(name.empty())
+		{
+			active_skybox = name;
+			return;
+		}
 		uint u = skybox_manager->LoadSkyBox(name);
 		if (u == ERROR_TEXTURE)
 			return;
@@ -170,6 +245,34 @@ public:
 		sky_box_generator.setTexture(u);
 	}
 
+	void addEnvironmentModel(string name, string model_key)
+	{
+		
+	}
+
+	void save(YASE::DEF::Scene* scene)
+	{
+		scene->set_name(name);
+		scene->set_skybox_name(active_skybox);
+		auto* work_cam = scene->mutable_work_camera();
+		work_camera.save(work_cam);
+		
+	}
+
+	void load(const YASE::DEF::Scene& scene)
+	{
+		name = scene.name();
+		active_skybox = scene.skybox_name();
+		const auto& wc = scene.work_camera();
+		work_camera.load(wc);
+
+	}
+
+	void loadGL()
+	{
+		setActiveSkybox(active_skybox);
+		is_loaded = true;
+	}
 
 	void Draw()
 	{
@@ -179,24 +282,30 @@ public:
 
 		projection = glm::perspective(glm::radians(work_camera.getFOV()), (w_width / w_height) * 1.0f, 0.1f, 800.0f);
 
-		glDepthMask(GL_FALSE);
-		shader_skybox.Use();
-		view = work_camera.getView();
-		shader_skybox.setMat4("gProjection", projection);
-		shader_skybox.setMat4("gVue", view);
-
-		sky_box_generator.Draw(shader_skybox.getID());
-
-		if (is_loaded) {
-			shader_texture.Use();
-			view = work_camera.getLookAt();
-			shader_texture.setMat4("gProjection", projection);
-			shader_texture.setMat4("gVue", view);
-			modele = glm::mat4(1.0);
-			shader_texture.setMat4("gModele", modele);
-			// Load nos models
+		// DRAW LA SKYBOX SI N'A UNE
+		if (!active_skybox.empty()) {
+			glDepthMask(GL_FALSE);
+			shader_skybox.Use();
+			view = work_camera.getView();
+			shader_skybox.setMat4("gProjection", projection);
+			shader_skybox.setMat4("gVue", view);
+			sky_box_generator.Draw(shader_skybox.getID());
 		}
+
+		// DRAW LES OBJETCS STATIQUE DE L'ENVIRONMENT
+		shader_texture.Use();
+		view = work_camera.getLookAt();
+		shader_texture.setMat4("gProjection", projection);
+		shader_texture.setMat4("gVue", view);
+		for(const auto& m : env_model_map)
+		{
+			if(m.second.model != nullptr)
+			{
+				shader_texture.setMat4("gModele", m.second.mat_model);
+				m.second.model->Draw(shader_texture.getID());
+			}
 			
+		}
 	}
 
 };
@@ -205,21 +314,100 @@ public:
 
 class SceneManager : public AssetManager {
 
-	vector<BaseScene>	scene;
-	int					active_scene = 0;
+	map<string,BaseScene>	scene;
+
+
+	string					active_scene_name = "";
+	BaseScene*				active_scene = nullptr;
 
 public:
-	SceneManager() {
+	// Get le pointeur vers les manager pour loader nos assets et nos shits
+	TextureManager*					tex_manager = nullptr;
+	SkyBoxManager*					skybox_manager = nullptr;
+	ModelManager*					model_manager = nullptr;
 
-	}
-
-	bool addNewScene(string name, TextureManager* tm, SkyBoxManager* sbm) {
-
-	}
-
-	BaseScene& getActiveScene()
+	vector<const char*> getKeys()
 	{
-		return scene[0];
+		vector<const char*> v;
+		for (const auto& t : scene)
+			v.emplace_back(t.first.c_str());
+		return v;
+	}
+
+	virtual void saveManager(ostream* writer) override
+	{
+		YASE::DEF::ListScene ls;
+		for(auto& s : scene)
+		{
+			YASE::DEF::Scene* ds = ls.add_scenes();
+			s.second.save(ds);
+		}
+		if(!ls.SerializeToOstream(writer))
+		{
+			
+		}
+		
+	}
+
+	virtual void loadManager(ifstream* reader) override
+	{
+		YASE::DEF::ListScene ls;
+		if(!ls.ParseFromIstream(reader))
+		{
+			return;
+		}
+		for(int i = 0; i < ls.scenes_size();i++)
+		{
+			const auto& s = ls.scenes(i);
+			scene[s.name()] = BaseScene(tex_manager, skybox_manager, model_manager, 1600, 900);
+			active_scene_name = s.name();
+			active_scene = &scene[s.name()];
+			active_scene->name = s.name();
+			active_scene->active_skybox = s.skybox_name();
+			active_scene->work_camera.load(s.work_camera());
+		}
+		
+	}
+
+	SceneManager() {
+		file_name = "scenes.yase";
+	}
+
+	bool addNewScene(string name,int width, int height) {
+		if(const auto& v = scene.find(name); v == scene.end())
+		{
+			scene[name] = BaseScene(tex_manager, skybox_manager, model_manager, height, width);
+			active_scene_name = name;
+			active_scene = &scene[name];
+			active_scene->name = name;
+			return true;
+		}
+		return false;
+	}
+
+	BaseScene* loadScene(string name)
+	{
+		const auto& i = scene.find(name);
+		if (i == scene.end())
+			return nullptr;
+		active_scene = &scene[name];
+		active_scene->tex_manager = tex_manager;
+		active_scene->model_manager = model_manager;
+		active_scene->skybox_manager = skybox_manager;
+		active_scene_name = name;
+		active_scene->name = name;
+		if(!active_scene->is_loaded)
+		{
+			i->second.loadGL();
+		}
+
+	
+		return active_scene;
+	}
+
+	BaseScene* getActiveScene()
+	{
+		return active_scene;
 	}
 
 };

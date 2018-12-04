@@ -9,6 +9,8 @@ class EnvironmentWindow {
 	TextureManager*		tex_man;
 	SkyBoxManager*		sb_man;
 
+	BaseScene*			current_scene = nullptr;
+
 	bool				logger_panel = false;
 
 	bool				shader_panel = false;
@@ -57,6 +59,10 @@ public:
 		{
 			ImGuiIO& io = ImGui::GetIO();
 			ImGui::Text("Nom environment : %s", loader->getName().c_str());
+			if(current_scene != nullptr)
+			{
+				ImGui::Text("Scene active : %s", current_scene->name.c_str());
+			}
 			ImGui::Text("Version : %d:%d:%d \n" "Framerate %.2f DeltaTime %.2f", 0, 0, 1, io.Framerate, io.DeltaTime);
 		}
 		ImGui::End();
@@ -110,7 +116,7 @@ public:
 			if (ImGui::BeginMenu("Scene"))
 			{
 				ImGui::TextColored({ 255,255,0,1 }, "Fenetre");
-				if (ImGui::Checkbox("Scene", &scene_panel));
+				ImGui::Checkbox("Scene", &scene_panel);
 				if(ImGui::Checkbox("Camera", &camera_panel))
 				{
 					//camera_settings_window.camera = loader->getActiveScene().getWorkingCamera();
@@ -295,18 +301,109 @@ public:
 		}
 	}
 
+	void ShowScenePanel()
+	{
+		if (scene_panel) {
+			if (ImGui::Begin("Scene", &scene_panel))
+			{
+				if (current_scene == nullptr) {
+					static bool popup_open = false;
+					static char bufName[100];
+					static vector<const char*> scene_items = loader->getSceneManager()->getKeys();
+					static int scene_item_current = -1;
+					ImGui::Text("Aucune scene active. Cree une nouvelle scene ou charger une existante");
+
+					ImGui::Combo("Scene ", &scene_item_current, scene_items.data(), scene_items.size());
+					ImGui::SameLine();
+					if(ImGui::Button("Charger"))
+					{
+						if(scene_item_current >= -1)
+						{
+							current_scene = loader->getSceneManager()->loadScene(scene_items[scene_item_current]);
+						}
+						
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Nouvelle scene"))
+					{
+						ImGui::OpenPopup("Nouvelle Scene");
+						popup_open = true;
+					}
+
+					if (ImGui::BeginPopupModal("Nouvelle Scene"))
+					{
+
+						ImGui::InputText("Nom", bufName, 100);
+
+						if (ImGui::Button("Cree")) {
+							ImGui::CloseCurrentPopup();
+							// Valide le nom et cree notre nouvelle scene
+							string scene_name = string(bufName);
+							if (scene_name.empty())
+								return;
+							// Crée une nouvelle scene
+							ImGuiIO& io = ImGui::GetIO();
+							bool b = loader->getSceneManager()->addNewScene(scene_name, io.DisplaySize.x, io.DisplaySize.y);
+							if(b)
+							{
+								current_scene = loader->getSceneManager()->getActiveScene();
+							}
+						}
+
+						ImGui::EndPopup();
+					}
+
+				}
+				else
+				{
+					static int selected_skybox = -1;
+					static vector<const char*> skybox = sb_man->getKeys();
+
+					ImGui::TextColored({ 255,255,0,1 }, "Scene active %s", current_scene->name.c_str());
+					ImGui::Separator();
+					ImGui::Text("Environnement");
+					ImGui::Separator();
+					ImGui::Text("Skybox Active : %s",current_scene->active_skybox.c_str());
+					ImGui::SameLine();
+					ImGui::Combo("", &selected_skybox, skybox.data(), skybox.size());
+					ImGui::SameLine();
+					if(ImGui::Button("Update"))
+					{
+						if (selected_skybox >= 0) {
+							current_scene->setActiveSkybox(sb_man->getKeys()[selected_skybox]);
+						}
+					}
+					ImGui::SameLine();
+					if(ImGui::Button("Clear"))
+					{
+						selected_skybox = -1;
+						current_scene->setActiveSkybox("");
+					}
+
+				}
+
+
+				ImGui::End();
+			}
+		}
+	}
+
 	void Draw(bool* over) {
 		if (run_main_loop = false) {
 			*over = true;
 		}
 
-		//loader->getActiveScene().Draw();
+		if(current_scene != nullptr)
+		{
+			current_scene->Draw();
+		}
 
 		ShowMenuBar();
 		ShowLogger();
 		ShowOverlay();
 		ShowTexturePanel();
 		ShowSkyBoxPanel();
+		ShowScenePanel();
 		camera_settings_window.Draw(&camera_panel);
 		model_manager_window.Draw();
 		ImGui::ShowDemoWindow();

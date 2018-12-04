@@ -3,11 +3,60 @@ package YASE.DEF;
 
 import "base.proto";
 
+message MatriceModel {
+	Vec3f translation = 1;
+	float angle_rotation = 2;
+	Vec3f rotation = 3;
+	Vec3f Scale = 4;
+}
+
+message KeyFrame {
+	float		 timestamp = 1;
+	MatriceModel transformation = 2;
+}
+
+message AnimationModel {
+	string name = 1;
+	string model_key = 2;
+
+	repeated KeyFrame frames = 3;
+	float time_length = 4;
+}
+
+message InitialModel {
+	string model_key = 1;
+
+	MatriceModel	transformation = 2;
+}
+
+message SceneAnimationModel {
+	float	starting_timestamp = 1;
+	float	ending_timestamp = 2;
+	
+	AnimationModel model_animation = 3;
+}
+
+message AnimationScene {
+	string model_key = 1;
+	string model_scene_name = 2;
+
+	MatriceModel initial_transformation = 3;
+	repeated SceneAnimationModel animations = 4;
+
+}
+
 message Scene {
 	string name = 1;
 
 	string	skybox_name = 2;
+	repeated string needed_model = 3;
 
-	CameraPosition	 work_camera = 3;
-	CameraPosition	scene_camera = 4;
+	CameraPosition	 work_camera = 4;
+	repeated CameraPosition	 scene_camera = 5;
+
+	repeated AnimationScene animations_scene = 6;
+}
+
+message ListScene {
+	repeated Scene scenes = 1;
 }

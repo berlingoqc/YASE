@@ -170,6 +170,30 @@ public:
 	{
 		return fov;
 	}
+
+	void save(YASE::DEF::CameraPosition* cp)
+	{
+		auto* p = cp->mutable_position();
+		p->set_x(camera_pos.x);
+		p->set_y(camera_pos.y);
+		p->set_z(camera_pos.z);
+		auto* f = cp->mutable_front();
+		f->set_x(camera_front.x);
+		f->set_y(camera_front.y);
+		f->set_z(camera_front.z);
+	}
+
+	void load(const YASE::DEF::CameraPosition& cp)
+	{
+		auto& p = cp.position();
+		camera_pos.x = p.x();
+		camera_pos.y = p.y();
+		camera_pos.z = p.z();
+		auto& f = cp.front();
+		camera_front.x = f.x();
+		camera_front.y = f.y();
+		camera_front.z = f.z();
+	}
 };
 
 

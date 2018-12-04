@@ -103,9 +103,9 @@ struct TexturePreview
 };
 
 struct ModelManager_Panel {
-	ModelManager*	model_manager;
+	ModelManager*	model_manager = nullptr;
 	FileExplorer	fx;
-	bool			show;
+	bool			show = false;
 
 
 	void Draw() {
@@ -179,6 +179,5 @@ struct ModelManager_Panel {
 
 
 };
-
 
 #endif

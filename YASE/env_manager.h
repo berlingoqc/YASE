@@ -15,6 +15,7 @@
 #include "skybox_manager.h"
 #include "sound_manager.h"
 #include "scene_manager.h"
+#include "animation_manager.h"
 
 #include "base.pb.h"
 #include "env.pb.h"
@@ -163,6 +164,10 @@ namespace fs = std::filesystem;
 			model_manager.Load();
 			sound_manager.Load();
 			scene_manager.Load();
+
+			scene_manager.skybox_manager = &skybox_manager;
+			scene_manager.model_manager = &model_manager;
+			scene_manager.tex_manager = &texture_manager;
 
 			return true;
 		}

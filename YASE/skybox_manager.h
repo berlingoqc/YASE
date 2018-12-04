@@ -17,6 +17,15 @@ class SkyBoxManager : public AssetManager
 	int																loaded_skybox_index = 0;
 	
 public:
+
+	vector<const char*> getKeys()
+	{
+		vector<const char*> v;
+		for (const auto& t : boxes)
+			v.emplace_back(t.first.c_str());
+		return v;
+	}
+
 	virtual void saveManager(ostream* writer) {
 		YASE::DEF::SkyBoxManager m;
 		for (const auto& i : boxes)
