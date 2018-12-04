@@ -317,7 +317,7 @@ public:
 		for(const auto& i : env_model_map)
 		{
 			YASE::DEF::InitialModel* im = scene->add_initial_models();
-			im->set_name(name);
+			im->set_name(i.first);
 			i.second->save(im);
 		}
 		

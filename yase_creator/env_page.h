@@ -86,7 +86,7 @@ public:
 				{
 					ModelManager* mm = loader->getModelManager();
 					try {
-						mm->AddModel("ground", getDefaultModel());
+						mm->AddModel("house", getDefaultModel());
 					}
 					catch (const ModelException& ex) {
 						YASE_LOG_ERROR(ex.what());

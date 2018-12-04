@@ -129,7 +129,7 @@ struct ModelManager_Panel {
 					fx.waiting_data = false;
 					fs::path p = fx.selected_current;
 					if (!p.empty()) {
-
+						model_manager->AddModelAssimp("statue_lib", p);
 					}
 				}
 			}

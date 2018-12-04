@@ -1,6 +1,9 @@
 #ifndef MESH_MANAGER_H
 #define MESH_MANAGER_H
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #include <iostream>
 #include <filesystem>
@@ -19,8 +22,90 @@
 #include "mesh.pb.h"
 
 namespace fs = std::filesystem;
+using namespace Assimp;
 using namespace std;
 
+static float largeur = 8.0f;
+static float hauteur = 30.0f;
+static float profondeur = 2.5f;
+
+static float profondeur_r = 2.5f;
+static float hauteur_r = 10.0f;
+
+static glm::vec3    vertex_base_home[12]
+{
+glm::vec3(-largeur, hauteur, -profondeur),
+glm::vec3(largeur, hauteur, -profondeur),
+glm::vec3(-largeur, -hauteur, -profondeur),
+glm::vec3(largeur, -hauteur, -profondeur),
+glm::vec3(-largeur, hauteur, profondeur),
+glm::vec3(largeur, hauteur, profondeur),
+glm::vec3(-largeur, -hauteur, profondeur),
+glm::vec3(largeur, -hauteur, profondeur),
+glm::vec3(largeur / 3, -hauteur, -profondeur - 0.001),
+glm::vec3(-largeur / 3, -hauteur, -profondeur - 0.001),
+glm::vec3(-largeur / 3, hauteur / 2, -profondeur - 0.001),
+glm::vec3(largeur / 3, hauteur / 2, -profondeur - 0.001)
+};
+
+static glm::vec3	vertex_roof_home[6]
+{
+	glm::vec3(0.0, hauteur + hauteur_r, -profondeur_r),
+	glm::vec3(-largeur, hauteur, -profondeur_r),
+	glm::vec3(largeur, hauteur, -profondeur_r),
+	glm::vec3(0.0, hauteur + hauteur_r, profondeur_r),
+	glm::vec3(-largeur, hauteur, profondeur_r),
+	glm::vec3(largeur, hauteur, profondeur_r)
+};
+
+static unsigned int	indice_base_home[36]
+{
+0,1,2,
+1,2,3,
+4,5,6,
+5,6,7,
+2,6,7,
+2,3,7,
+0,4,5,
+0,1,5,
+1,5,7,
+1,3,7,
+0,2,4,
+2,4,6
+};
+
+static unsigned int	indice_roof_home[18]
+{
+0,1,2,
+3,4,5,
+0,5,2,
+0,3,5,
+0,4,1,
+0,3,4
+};
+
+static glm::vec2	texture_roof_home[6]
+{
+	glm::vec2(0.0f, 1.0f),
+	glm::vec2(0.0f, 0.0f),
+	glm::vec2(0.0f, 0.0f),
+	glm::vec2(1.0f, 1.0f),
+	glm::vec2(1.0f, 0.0f),
+	glm::vec2(1.0f, 0.0f)
+};
+
+static glm::vec2	texture_base_home[8]
+{
+	glm::vec2(0.0f, 1.0f),
+	glm::vec2(1.0f, 1.0f),
+	glm::vec2(0.0f, 0.0f),
+	glm::vec2(1.0f, 0.0f),
+
+	glm::vec2(1.0f, 1.0f),
+	glm::vec2(0.0f, 1.0f),
+	glm::vec2(1.0f, 0.0f),
+	glm::vec2(0.0f, 0.0f)
+};
 
 static glm::vec3	vertex_base[4]
 {
@@ -39,32 +124,59 @@ static glm::vec2	tex_bas[4]
 inline YASE::DEF::Model getDefaultModel()
 {
 	YASE::DEF::Model m;
-	m.set_name("ground");
+	m.set_name("house");
 	YASE::DEF::Mesh mesh;
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < 12; i++)
 	{
 		YASE::DEF::Vec3f* vert = new YASE::DEF::Vec3f();
 		YASE::DEF::Vec2f* tex = new YASE::DEF::Vec2f();
 
-		vert->set_x(vertex_base[i].x);
-		vert->set_y(vertex_base[i].y);
-		vert->set_z(vertex_base[i].z);
-
-		tex->set_x(tex_bas[i].x);
-		tex->set_y(tex_bas[i].y);
+		vert->set_x(vertex_base_home[i].x);
+		vert->set_y(vertex_base_home[i].y);
+		vert->set_z(vertex_base_home[i].z);
+		if (i < 8) {
+			tex->set_x(texture_base_home[i].x);
+			tex->set_y(texture_base_home[i].y);
+		}
 
 		auto* v = mesh.add_vertices();
 		v->set_allocated_position(vert);
 		v->set_allocated_texcoord(tex);
 	}
-	for(int i = 0;i<6;i++)
+	for(int i = 0;i<36;i++)
 	{
-		mesh.add_indices(indice_base[i]);
+		mesh.add_indices(indice_base_home[i]);
 	}
-	mesh.add_textures_index(0);
+	mesh.add_textures_index(1);
 	auto* am = m.add_meshes();
 	*am = mesh;
 
+	mesh = YASE::DEF::Mesh();
+	for (int i = 0; i < 18; i++)
+	{
+		YASE::DEF::Vec3f* vert = new YASE::DEF::Vec3f();
+		YASE::DEF::Vec2f* tex = new YASE::DEF::Vec2f();
+
+		vert->set_x(vertex_roof_home[i].x);
+		vert->set_y(vertex_roof_home[i].y);
+		vert->set_z(vertex_roof_home[i].z);
+
+		if (i < 6) {
+			tex->set_x(texture_roof_home[i].x);
+			tex->set_y(texture_roof_home[i].y);
+		}
+
+		auto* v = mesh.add_vertices();
+		v->set_allocated_position(vert);
+		v->set_allocated_texcoord(tex);
+	}
+	for (int i = 0; i < 6; i++)
+	{
+		mesh.add_indices(indice_base[i]);
+	}
+	mesh.add_textures_index(2);
+	auto* rm = m.add_meshes();
+	*rm = mesh;
 	return m;
 }
 
@@ -85,11 +197,11 @@ public:
 
 	std::vector<int>		needed_texture;
 
-	YaseMesh(std::vector<Vertex> vert, std::vector<uint> indices)
+	YaseMesh(std::vector<Vertex> vert, std::vector<uint> indices, std::vector<int> texture)
 	{
 		this->vertices = vert;
-		have_ibo = !indices.empty();
 		this->indices = indices;
+		this->needed_texture = texture;
 	}
 
 	YaseMesh(const YASE::DEF::Mesh& m)
@@ -133,6 +245,8 @@ public:
 			needed_texture.emplace_back(v);
 		}
 	}
+
+
 
 	const vector<int>& getNeededTexture() const { return needed_texture; }
 
@@ -201,8 +315,10 @@ class YaseModel
 
 	std::vector<YaseMesh>	meshes;
 
-public:
+	fs::path				directory;
 
+public:
+	
 	bool hasBeenUpdate() { return has_been_update; }
 
 	// Draw dessine le model avec le shader donner
@@ -239,6 +355,123 @@ public:
 		LoadFromDefModel(model);
 		return true;
 	}
+
+	bool ReadModelInfoAssimp(fs::path filename,TextureManager* tm)
+	{
+		Assimp::Importer importer;
+		const aiScene* scene = importer.ReadFile(filename.string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+			std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
+			return false;
+		}
+		directory = filename.parent_path();
+		processNode(scene->mRootNode, scene, tm);
+		return true;
+	}
+	void processNode(aiNode* node, const aiScene* scene,TextureManager* tm)
+	{
+		for (unsigned int i = 0; i < node->mNumMeshes; i++)
+		{
+			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+			meshes.push_back(processMesh(mesh,scene,tm));
+		}
+
+		for (unsigned int i = 0; i < node->mNumChildren; i++)
+		{
+			processNode(node->mChildren[i], scene,tm);
+		}
+	}
+
+	YaseMesh processMesh(aiMesh* mesh, const aiScene* scene,TextureManager* tm)
+	{
+		// data to fill
+		std::vector<Vertex> vertices;
+		std::vector<unsigned int> indices;
+		std::vector<int> textures;
+
+		// Walk through each of the mesh's vertices
+		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+		{
+			Vertex vertex;
+			glm::vec3 vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
+			// positions
+			vector.x = mesh->mVertices[i].x;
+			vector.y = mesh->mVertices[i].y;
+			vector.z = mesh->mVertices[i].z;
+			vertex.Position = vector;
+			// normals
+			vector.x = mesh->mNormals[i].x;
+			vector.y = mesh->mNormals[i].y;
+			vector.z = mesh->mNormals[i].z;
+			vertex.Normal = vector;
+			// texture coordinates
+			if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
+			{
+				glm::vec2 vec;
+				// a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
+				// use models where a vertex can have multiple texture coordinates so we always take the first set (0).
+				vec.x = mesh->mTextureCoords[0][i].x;
+				vec.y = mesh->mTextureCoords[0][i].y;
+				vertex.TexCoords = vec;
+			}
+			else
+				vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+			// tangent
+			/*vector.x = mesh->mTangents[i].x;
+			vector.y = mesh->mTangents[i].y;
+			vector.z = mesh->mTangents[i].z;
+			vertex.Tangent = vector;
+			// bitangent
+			vector.x = mesh->mBitangents[i].x;
+			vector.y = mesh->mBitangents[i].y;
+			vector.z = mesh->mBitangents[i].z;
+			vertex.Bitangent = vector;*/
+
+			vertices.push_back(vertex);
+		}
+		// now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+		for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+		{
+			aiFace face = mesh->mFaces[i];
+			// retrieve all indices of the face and store them in the indices vector
+			for (unsigned int j = 0; j < face.mNumIndices; j++)
+				indices.push_back(face.mIndices[j]);
+		}
+		// process materials
+		for (uint i = 0; i < scene->mNumMaterials; i++)
+		{
+			aiMaterial* material = scene->mMaterials[i];
+			std::vector<int> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse",tm);
+			textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+		}
+
+		return YaseMesh(vertices, indices,textures);
+	}
+
+	vector<int> loadMaterialTextures(aiMaterial* mat,aiTextureType type, std::string typeName,TextureManager* tm)
+	{
+		std::vector<int> textures;
+		for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
+		{
+			aiString str;
+			if (mat->GetTexture(type, i, &str) == AI_SUCCESS) {
+				// check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
+				// if texture hasn't been loaded already, load it
+				fs::path text_path = str.C_Str();
+				text_path = directory / text_path;
+				if(tm->AddNewTexture(text_path))
+				{
+					textures.emplace_back(tm->getCurrentIndex() - 1);
+				}
+			}
+			else
+			{
+				printf("Failed load %s\n", typeName.c_str());
+			}
+		}
+		return textures;
+	}
+
 
 	// Cr�e les buffer gpu et charge les textures requis depuis le texturemanager
 	void LoadModel(TextureManager* tm)
@@ -351,6 +584,15 @@ public:
 	void ImportModel(string name, fs::path filepath)
 	{
 		
+	}
+
+	void AddModelAssimp(string name, fs::path filepath)
+	{
+		YaseModel* m = new YaseModel();
+		m->ReadModelInfoAssimp(filepath, tex_manager);
+		m->LoadModel(tex_manager);
+		map_model[name] = m;
+
 	}
 
 	// Ajout un yasemodel existant dans la collection. Le sauvegarde tout de suite. C'est la fonction qui s'occupe de ca
