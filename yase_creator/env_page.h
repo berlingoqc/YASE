@@ -117,9 +117,11 @@ public:
 			{
 				ImGui::TextColored({ 255,255,0,1 }, "Fenetre");
 				ImGui::Checkbox("Scene", &scene_panel);
-				if(ImGui::Checkbox("Camera", &camera_panel))
-				{
-					//camera_settings_window.camera = loader->getActiveScene().getWorkingCamera();
+				ImGui::Separator();
+				if (current_scene != nullptr) {
+					if (ImGui::Checkbox("Camera", &camera_panel))
+					{
+					}
 				}
 				ImGui::EndMenu();
 			}
@@ -225,7 +227,7 @@ public:
 
 	void ShowSkyBoxPanel()
 	{
-		if (skybox_panel)
+		if (true)
 		{
 			static string selected_skybox = "";
 			static int	  selected_index = -1;
@@ -242,8 +244,6 @@ public:
 				ImGui::InputText("Nom", bufName, 100);
 				ImGui::SameLine();
 				if (ImGui::Button("Ajouter")) {
-					if (bufName == NULL)
-						return;
 					fx.get_folder = true;
 					fx.Start();
 				}
@@ -288,14 +288,7 @@ public:
 
 					ImGui::TreePop();
 				}
-				if(ImGui::Button("Afficher"))
-				{
-					if (!selected_skybox.empty())
-					{
-						//loader->getActiveScene().setActiveSkybox(selected_skybox);
-					}
 
-				}
 				ImGui::End();
 			}
 		}
@@ -320,6 +313,7 @@ public:
 						if(scene_item_current >= -1)
 						{
 							current_scene = loader->getSceneManager()->loadScene(scene_items[scene_item_current]);
+							camera_settings_window.camera = &current_scene->work_camera;
 						}
 						
 					}
@@ -347,6 +341,7 @@ public:
 							if(b)
 							{
 								current_scene = loader->getSceneManager()->getActiveScene();
+								camera_settings_window.camera = &current_scene->work_camera;
 							}
 						}
 
@@ -359,13 +354,17 @@ public:
 					static int selected_skybox = -1;
 					static vector<const char*> skybox = sb_man->getKeys();
 
+					static int selected_add_model = -1;
+					static vector<const char*> add_model_list = loader->getModelManager()->getKeys();
+					static char	add_mode_name[100];
+
 					ImGui::TextColored({ 255,255,0,1 }, "Scene active %s", current_scene->name.c_str());
 					ImGui::Separator();
 					ImGui::Text("Environnement");
 					ImGui::Separator();
-					ImGui::Text("Skybox Active : %s",current_scene->active_skybox.c_str());
+					ImGui::Text("Skybox : %s",current_scene->active_skybox.c_str());
 					ImGui::SameLine();
-					ImGui::Combo("", &selected_skybox, skybox.data(), skybox.size());
+					ImGui::Combo("##1", &selected_skybox, skybox.data(), skybox.size());
 					ImGui::SameLine();
 					if(ImGui::Button("Update"))
 					{
@@ -378,6 +377,55 @@ public:
 					{
 						selected_skybox = -1;
 						current_scene->setActiveSkybox("");
+					}
+					ImGui::Separator();
+					ImGui::InputText("Nom", add_mode_name, 100);
+					ImGui::Combo("##2", &selected_add_model, add_model_list.data(), add_model_list.size());
+					if(ImGui::Button("Ajouter model"))
+					{
+						if(selected_add_model >= 0)
+						{
+							current_scene->addEnvironmentModel(add_mode_name, add_model_list[selected_add_model]);
+						}
+					}
+					if (ImGui::TreeNode("Model statique")) {
+						static int selected_index = -1;
+						static string selected_model = "";
+						static int selection_mask = (1 << 2);
+
+						static float	scale_values[3];
+
+						int i = 0;
+						for (const auto& b : current_scene->env_model_map)
+						{
+							ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ((selection_mask & (1 << i)) ? ImGuiTreeNodeFlags_Selected : 0);
+							// Node
+							bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, "%s", b.first.c_str());
+							if (ImGui::IsItemClicked()) {
+								selected_model = b.first;
+								selected_index = i;
+							}
+							if (node_open)
+							{
+								scale_values[0] = b.second->transformation.scale.x; scale_values[1] = b.second->transformation.scale.y; scale_values[2] = b.second->transformation.scale.z;
+								// Control la matrice model
+								if(ImGui::DragFloat3("Scale", scale_values, 1, 0, 1000))
+								{
+									b.second->transformation.scale.x = scale_values[0];
+									b.second->transformation.scale.y = scale_values[1];
+									b.second->transformation.scale.z = scale_values[2];
+									b.second->updateModel();
+								}
+								ImGui::TreePop();
+							}
+							i++;
+						}
+						if (selected_index != -1)
+						{
+							selection_mask = (1 << selected_index);
+						}
+
+						ImGui::TreePop();
 					}
 
 				}
@@ -406,7 +454,6 @@ public:
 		ShowScenePanel();
 		camera_settings_window.Draw(&camera_panel);
 		model_manager_window.Draw();
-		ImGui::ShowDemoWindow();
 	}
 
 };

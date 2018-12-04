@@ -169,6 +169,8 @@ namespace fs = std::filesystem;
 			scene_manager.model_manager = &model_manager;
 			scene_manager.tex_manager = &texture_manager;
 
+			model_manager.tex_manager = &texture_manager;
+
 			return true;
 		}
 	};

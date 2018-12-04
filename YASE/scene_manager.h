@@ -99,10 +99,47 @@ class SkyBoxGenerator
 
 struct MatriceModel
 {
-	glm::vec3	translation;
-	glm::vec3	scale;
-	glm::vec3	rotation;
-	float		angle_rotation;
+	glm::vec3	translation = glm::vec3(1,1,1);
+	glm::vec3	scale = glm::vec3(1,1,1);
+	glm::vec3	rotation = glm::vec3(0,0,0);
+	float		angle_rotation = 0.0f;
+
+
+	void save(YASE::DEF::MatriceModel* mm)
+	{
+		auto* p = mm->mutable_rotation();
+		p->set_x(rotation.x);
+		p->set_y(rotation.y);
+		p->set_z(rotation.z);
+		auto* t = mm->mutable_translation();
+		t->set_x(translation.x);
+		t->set_y(translation.y);
+		t->set_z(translation.z);
+		auto* s = mm->mutable_scale();
+		s->set_x(scale.x);
+		s->set_y(scale.y);
+		s->set_z(scale.z);
+		mm->set_angle_rotation(angle_rotation);
+		
+		
+	}
+
+	void load(const YASE::DEF::MatriceModel& mm)
+	{
+		auto& p = mm.translation();
+		translation.x = p.x();
+		translation.y = p.y();
+		translation.z = p.z();
+		auto& s = mm.scale();
+		scale.x = s.x();
+		scale .y = s.y();
+		scale.z = s.z();
+		auto& r = mm.rotation();
+		rotation.x = r.x();
+		rotation.y = r.y();
+		rotation.z = r.z();
+		angle_rotation = mm.angle_rotation();
+	}
 };
 
 struct KeyFrame
@@ -127,16 +164,30 @@ struct StaticModel
 	MatriceModel transformation;
 
 	// Valeur Obtenue
-	glm::mat4	mat_model;
+	glm::mat4	mat_model = glm::mat4(1.0f);
 
-	YaseModel*	model;
+	YaseModel*	model = nullptr;
+
+	void save(YASE::DEF::InitialModel* im)
+	{
+		im->set_model_key(model_key);
+		auto* mt = im->mutable_transformation();
+		transformation.save(mt);
+	}
+
+	void load(const YASE::DEF::InitialModel& im)
+	{
+		model_key = im.model_key();
+		transformation.load(im.transformation());
+	}
 
 	void updateModel()
 	{
-				// Calcul ca matrice model
+		// Calcul ca matrice model
 		mat_model = glm::mat4(1.0f);
 		mat_model = glm::translate(mat_model, transformation.translation); // translate it down so it's at the center of the scene
-		mat_model = glm::rotate(mat_model, glm::radians(transformation.angle_rotation), transformation.rotation);
+		if(transformation.angle_rotation != 0)
+			mat_model = glm::rotate(mat_model, glm::radians(transformation.angle_rotation), transformation.rotation);
 		mat_model = glm::scale(mat_model, transformation.scale);	// it's a bit too big for our scene, so scale it down
 	}
 
@@ -148,9 +199,7 @@ struct StaticModel
 		{
 			YASE_LOG_ERROR(("Impossible de charger le model " + model_key).c_str());
 		}
-
 		updateModel();
-
 	}
 };
 
@@ -179,10 +228,12 @@ public:
 	ENGINE::Shrapper				shader_skybox;
 
 	int								w_height, w_width;
+	float							near_plane = 0.1f;
+	float							rear_plane = 800.0f;
 
 	bool							is_loaded = false;
 
-	map<string, StaticModel>		env_model_map; // Contient les models static qui compose l'environnement de la scene
+	map<string, StaticModel*>		env_model_map; // Contient les models static qui compose l'environnement de la scene
 
 public:
 	BaseScene()
@@ -247,7 +298,12 @@ public:
 
 	void addEnvironmentModel(string name, string model_key)
 	{
-		
+		if (const auto& p = env_model_map.find(name); p != env_model_map.end() || name.empty())
+			return;
+		StaticModel* smodel = new StaticModel();
+		smodel->model_key = model_key;
+		smodel->loadStaticModel(model_manager);
+		env_model_map[name] = smodel;
 	}
 
 	void save(YASE::DEF::Scene* scene)
@@ -256,6 +312,14 @@ public:
 		scene->set_skybox_name(active_skybox);
 		auto* work_cam = scene->mutable_work_camera();
 		work_camera.save(work_cam);
+
+		// Sauvegarde nos models statique de l'environment
+		for(const auto& i : env_model_map)
+		{
+			YASE::DEF::InitialModel* im = scene->add_initial_models();
+			im->set_name(name);
+			i.second->save(im);
+		}
 		
 	}
 
@@ -266,11 +330,24 @@ public:
 		const auto& wc = scene.work_camera();
 		work_camera.load(wc);
 
+		// Load nos models statique de l'environment
+		for(int i = 0;i<scene.initial_models_size();i++)
+		{
+			const auto& im = scene.initial_models(i);
+			StaticModel* sm = new StaticModel();
+			sm->load(im);
+			env_model_map[im.name()] = sm;
+		}
+
 	}
 
 	void loadGL()
 	{
 		setActiveSkybox(active_skybox);
+		for(const auto& i : env_model_map)
+		{
+			i.second->loadStaticModel(model_manager);
+		}
 		is_loaded = true;
 	}
 
@@ -299,10 +376,10 @@ public:
 		shader_texture.setMat4("gVue", view);
 		for(const auto& m : env_model_map)
 		{
-			if(m.second.model != nullptr)
+			if(m.second->model != nullptr)
 			{
-				shader_texture.setMat4("gModele", m.second.mat_model);
-				m.second.model->Draw(shader_texture.getID());
+				shader_texture.setMat4("gModele", m.second->mat_model);
+				m.second->model->Draw(shader_texture.getID());
 			}
 			
 		}
@@ -365,6 +442,7 @@ public:
 			active_scene->name = s.name();
 			active_scene->active_skybox = s.skybox_name();
 			active_scene->work_camera.load(s.work_camera());
+			active_scene->load(s);
 		}
 		
 	}

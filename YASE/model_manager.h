@@ -279,7 +279,6 @@ class ModelManager : public AssetManager
 	inline const static string		extension_model = ".model";
 	inline const static string		mesh_folder[2]{ "yase", "obj" };
 
-	TextureManager*					tex_manager;
 
 	// Une map qui contient tous mes models que je possede
 	// dans mon arborscence. La liste est loader au demarrage
@@ -290,7 +289,14 @@ class ModelManager : public AssetManager
 
 
 public:
-
+	TextureManager*					tex_manager;
+	vector<const char*> getKeys()
+	{
+		vector<const char*> v;
+		for (const auto& t : map_model)
+			v.emplace_back(t.first.c_str());
+		return v;
+	}
 	virtual void saveManager(ostream* writer) {
 		YASE::DEF::ModelList ml;
 		for (const auto& m : map_model) {
@@ -371,19 +377,20 @@ public:
 	// Retourne le pointeur d'un model deja loader. ( Le load si besoin )
 	YaseModel*	getLoadedModel(string name)
 	{
-		auto& v = map_model.find(name);
+		const auto& v = map_model.find(name);
 		if (v == map_model.end()) {
 			// Model n'existe pas
 			throw ModelException(false, name);
 		}
 		if(v->second == nullptr) {
 			YaseModel* ym = new YaseModel();
-			name = name.append(extension_model);
+			//name = name.append(extension_model);
 			fs::path fp = root_folder / name;
 			if (!ym->ReadModelInfo(fp)) {
 				return nullptr;
 			}
 			v->second = ym;
+			v->second->LoadModel(tex_manager);
 		}
 		return v->second;
 	}

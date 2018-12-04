@@ -25,8 +25,9 @@ message AnimationModel {
 
 message InitialModel {
 	string model_key = 1;
+	string name = 2;
 
-	MatriceModel	transformation = 2;
+	MatriceModel	transformation = 3;
 }
 
 message SceneAnimationModel {
@@ -54,7 +55,9 @@ message Scene {
 	CameraPosition	 work_camera = 4;
 	repeated CameraPosition	 scene_camera = 5;
 
-	repeated AnimationScene animations_scene = 6;
+	repeated InitialModel initial_models = 6;
+
+	repeated AnimationScene animations_scene = 7;
 }
 
 message ListScene {
