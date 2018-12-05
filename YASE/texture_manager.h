@@ -161,6 +161,10 @@ public:
 			categories.emplace_back(category);
 		}
 		dest = dest / filepath.filename();
+		if(fs::exists(dest))
+		{
+			return true; // retourne true si l'image existe deja dans le fichier de destination
+		}
 		if (!fs::exists(dest) && !fs::copy_file(filepath, dest)) {
 			YASE_LOG_ERROR(("Echec de la copie du ficher" + filepath.string()).c_str());
 			return false;

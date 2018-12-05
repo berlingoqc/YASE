@@ -107,9 +107,7 @@ public:
 				ImGui::Checkbox("Texture", &textures_panel);
 				ImGui::Checkbox("Shader", &shader_panel);
 				ImGui::Checkbox("Skybox", &skybox_panel);
-				if (ImGui::Checkbox("Model", &model_panel)) {
-					model_manager_window.show = model_panel;
-				}
+				ImGui::Checkbox("Model", &model_manager_window.show);
 				ImGui::Separator();
 				ImGui::EndMenu();
 			}
@@ -142,7 +140,7 @@ public:
 			static int selected_texture = -1;
 			static bool show_preview = false;
 
-			if (ImGui::Begin("Textures environment",&textures_panel)) {
+			ImGui::Begin("Textures environment", &textures_panel);
 				ImGui::TextColored({ 255,255,0,1 }, "Ajouter et configurer les textures de votre environment");
 				ImGui::Separator();
 				ImGui::Text("Textures total : %d Textures charger : %d", tex_man->getTexturesCount(), tex_man->getTexturesLoadedCount());
@@ -166,6 +164,7 @@ public:
 						}
 					}
 				}
+				
 				static int selection_mask = (1 << 2);
 				static uint text_id = ERROR_TEXTURE;
 				// Section liste de mes textures loader
@@ -221,13 +220,12 @@ public:
 				ImGui::Separator();
 
 				ImGui::End();
-			}
 		}
 	}
 
 	void ShowSkyBoxPanel()
 	{
-		if (true)
+		if (skybox_panel)
 		{
 			static string selected_skybox = "";
 			static int	  selected_index = -1;
@@ -235,7 +233,7 @@ public:
 			static int selection_mask = (1 << 2);
 			static char bufName[100];
 
-			if (ImGui::Begin("Skybox environment", &skybox_panel)) {
+			ImGui::Begin("Skybox environment", &skybox_panel);
 				ImGui::TextColored({ 255,255,0,1 }, "Ajouter et configurer les skybox de votre environment");
 				ImGui::Separator();
 				ImGui::Text("Skybox total : %d Skybox charger : %d", sb_man->getNumberSkyBox(), sb_man->getNumberLoadedSkyBox());
@@ -288,17 +286,14 @@ public:
 
 					ImGui::TreePop();
 				}
-
 				ImGui::End();
-			}
 		}
 	}
 
 	void ShowScenePanel()
 	{
 		if (scene_panel) {
-			if (ImGui::Begin("Scene", &scene_panel))
-			{
+			ImGui::Begin("Scene", &scene_panel);
 				if (current_scene == nullptr) {
 					static bool popup_open = false;
 					static char bufName[100];
@@ -358,6 +353,7 @@ public:
 					static vector<const char*> add_model_list = loader->getModelManager()->getKeys();
 					static char	add_mode_name[100];
 
+
 					ImGui::TextColored({ 255,255,0,1 }, "Scene active %s", current_scene->name.c_str());
 					ImGui::Separator();
 					ImGui::Text("Environnement");
@@ -379,8 +375,15 @@ public:
 						current_scene->setActiveSkybox("");
 					}
 					ImGui::Separator();
-					ImGui::InputText("Nom", add_mode_name, 100);
-					ImGui::Combo("##2", &selected_add_model, add_model_list.data(), add_model_list.size());
+
+					ImGui::PushItemWidth(200);
+					ImGui::TextColored({ 255,255,0,1 }, "Ajouter model");
+					ImGui::SameLine();
+					ImGui::InputText("##2", add_mode_name, 100);
+					ImGui::SameLine();
+					ImGui::Combo("##3", &selected_add_model, add_model_list.data(), add_model_list.size());
+					ImGui::PopItemWidth();
+					ImGui::SameLine();
 					if(ImGui::Button("Ajouter model"))
 					{
 						if(selected_add_model >= 0)
@@ -429,10 +432,7 @@ public:
 					}
 
 				}
-
-
 				ImGui::End();
-			}
 		}
 	}
 
@@ -454,6 +454,7 @@ public:
 		ShowScenePanel();
 		camera_settings_window.Draw(&camera_panel);
 		model_manager_window.Draw();
+		
 	}
 
 };

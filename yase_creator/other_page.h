@@ -109,7 +109,9 @@ struct ModelManager_Panel {
 
 
 	void Draw() {
-		if (ImGui::Begin("Model Manager", &show)) {
+		if (show)
+		{
+			ImGui::Begin("Model Manager", &show);
 			ImGui::TextColored({ 255,255,0,1 }, "Ajouter et configurer les models de votre environment");
 			ImGui::Separator();
 			ImGui::Text("Model total : %d Model charger : %d", model_manager->getNumberModel(), model_manager->getNumberLoadedModel());
@@ -153,10 +155,17 @@ struct ModelManager_Panel {
 					if (node_open) {
 						if (t.second == nullptr) {
 							ImGui::Text("Model non charger");
+						} else
+						{
+							/// Si le model est loader on affiche c'est informations detailler sur les meshes
+							// Affiche le total de mesh 
+
+							// Affiche un treenode pour chaque mesh
 						}
 
 						ImGui::TreePop();
 					}
+					i++;
 				}
 				if (selected_index != -1)
 				{

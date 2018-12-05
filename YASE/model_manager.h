@@ -318,7 +318,7 @@ class YaseModel
 	fs::path				directory;
 
 public:
-	
+	const vector<YaseMesh>& getMeshes() { return meshes; }
 	bool hasBeenUpdate() { return has_been_update; }
 
 	// Draw dessine le model avec le shader donner
