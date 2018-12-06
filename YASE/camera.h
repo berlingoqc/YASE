@@ -58,6 +58,10 @@ public:
 	const glm::vec3& getCameraPosition() { return camera_pos; }
 	const glm::vec3& getCameraFront() { return camera_front; }
 	const glm::vec3& getCameraUp() { return camera_up; }
+	const glm::vec3& getCameraSpeed() { return camera_speed; }
+	void setCameraSpeed(glm::vec3 speed) {
+		camera_speed = speed;
+	}
 	float getYaw() { return yaw; }
 	float getPitch() { return pitch; }
 
@@ -87,7 +91,7 @@ public:
 
 	void down()
 	{
-		camera_pos -= camera_speed.y;
+		camera_pos.y -= camera_speed.y;
 		
 	}
 
@@ -108,52 +112,32 @@ public:
 
 	void move(int x, int y)
 	{
-//	if (wrap_mouse) {
-//			wrap_mouse = false;
-//			last_x = x;
-//			last_y = y;
-//		}
-//		else {
-			if (first_mouse) {
-				last_x = x;
-				last_y = y;
-				first_mouse = false;
-			}
-
-			GLfloat xoffset = x - last_x;
-			GLfloat yoffset = last_y - y;
+		if (first_mouse) {
 			last_x = x;
 			last_y = y;
+			first_mouse = false;
+		}
 
-			GLfloat sensitivity = 0.3;
-			xoffset *= sensitivity;
-			yoffset *= sensitivity;
+		GLfloat xoffset = x - last_x;
+		GLfloat yoffset = last_y - y;
+		last_x = x;	
+		last_y = y;
 
-			yaw += xoffset;
-			pitch += yoffset;
+		GLfloat sensitivity = 0.3;
+		xoffset *= sensitivity;
+		yoffset *= sensitivity;
 
-			if (pitch > 89.0f) pitch = 89.0f;
-			if (pitch < -89.0f) pitch = -89.0f;
+		yaw += xoffset;
+		pitch += yoffset;
 
-			glm::vec3 front;
-			front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-			front.y = sin(glm::radians(pitch));
-			front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-			camera_front = glm::normalize(front);
+		if (pitch > 89.0f) pitch = 89.0f;
+		if (pitch < -89.0f) pitch = -89.0f;
 
-//			wrap_mouse = true;
-//		}
-	}
-
-
-	void setCameraSpeed(glm::vec3 v)
-	{
-		camera_speed = v;
-	}
-
-	const glm::vec3& getCameraSpeed() const
-	{
-		return camera_speed;
+		glm::vec3 front;
+		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		front.y = sin(glm::radians(pitch));
+		front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		camera_front = glm::normalize(front);
 	}
 
 	void addFOV(float v)
@@ -184,6 +168,11 @@ public:
 		cp->set_name(name);
 		cp->set_pitch(pitch);
 		cp->set_yaw(yaw);
+		cp->set_fov(fov);
+		auto* s = cp->mutable_speed();
+		s->set_x(camera_speed.x);
+		s->set_y(camera_speed.y);
+		s->set_z(camera_speed.z);
 	}
 
 	void load(const YASE::DEF::CameraPosition& cp)
@@ -199,6 +188,11 @@ public:
 		yaw = cp.yaw();
 		pitch = cp.pitch();
 		name = cp.name();
+		fov = cp.fov();
+		auto& s = cp.speed();
+		camera_speed.x = s.x();
+		camera_speed.y = s.y();
+		camera_speed.z = s.z();
 	}
 };
 

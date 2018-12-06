@@ -15,8 +15,10 @@ struct CameraSettings
 		if (*p_open == false)
 			return;
 		static float fov = 70.0f;
+		static float speed[3];
 		ImGui::Begin("Camera", p_open);
-			if (camera != nullptr) {
+		
+		if (camera != nullptr) {
 				ImGui::TextColored({ 255,255,0,1 }, "Nom : %s", camera->getName().c_str());
 				ImGui::Separator();
 				ImGui::Text("YAW %.2f PITCH %.2f", camera->getYaw(), camera->getPitch());
@@ -25,6 +27,13 @@ struct CameraSettings
 				const auto& u = camera->getCameraUp();
 				ImGui::Text("Position X : %.2f Y : %.2f Z : %.2f", v.x, v.y, v.z);
 
+				ImGui::Text("Vitesse");
+				const glm::vec3& speed_v = camera->getCameraSpeed();
+				speed[0] = speed_v.x; speed[1] = speed_v.y; speed[2] = speed_v.z;
+				ImGui::Separator();
+				if (ImGui::DragFloat3("## 1", speed, 0.1, 0.0, 50.0)) {
+					camera->setCameraSpeed({ speed[0],speed[1],speed[2] });
+				}
 
 				if (ImGui::DragFloat("FOV", &fov, 1, 5, 180))
 				{
@@ -108,7 +117,7 @@ struct TexturePreview
 struct ModelManager_Panel {
 	ModelManager*	model_manager = nullptr;
 	FileExplorer	fx;
-	bool			show = false;
+	bool			show = true;
 
 
 	void Draw() {
@@ -163,20 +172,13 @@ struct ModelManager_Panel {
 						{
 							/// Si le model est loader on affiche c'est informations detailler sur les meshes
 							// Affiche le total de mesh 
+							ImGui::Text("Nombre de mesh : %d", t.second->getMeshes().size());
 							if(ImGui::TreeNode("Mesh"))
 							{
 								for(auto& m : t.second->meshes)
 								{
-									static string need_tex;
-									int i = 0;
-									for(auto& tex : m.needed_texture)
-									{
-										if(ImGui::Button(tex.c_str()))
-										{
-											m.needed_texture.erase(m.needed_texture.begin() + i);
-										}
-										i++;
-									}
+
+									
 								}
 								ImGui::TreePop();
 							}

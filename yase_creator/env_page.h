@@ -82,18 +82,6 @@ public:
 					}
 				}
 
-				if(ImGui::MenuItem("LOL"))
-				{
-					tex_man->AddNewLoadedTexture("house_side", "building1.jpg", YASE::DEF::REPEATED, YASE::DEF::LINEAR);
-					tex_man->AddNewLoadedTexture("house_roof", "toit2.jpg", YASE::DEF::REPEATED, YASE::DEF::LINEAR);
-					ModelManager* mm = loader->getModelManager();
-					try {
-						mm->AddModel("building", getDefaultModel());
-					}
-					catch (const ModelException& ex) {
-						YASE_LOG_ERROR(ex.what());
-					}
-				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Quitter", "Alt+F4"))
 				{
