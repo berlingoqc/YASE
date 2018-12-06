@@ -130,9 +130,10 @@ namespace fs = std::filesystem;
 			// Get les variable de sauvegarde des autres aussi
 
 			fs::path fn = root_folder / env_file_name;
-			ofstream of(fn.string(), std::ios::binary);
+			ofstream of(fn.string().c_str(), std::ios_base::out | std::ios_base::trunc | std::ios::binary);
 			if (!env.SerializeToOstream(&of))
 				return false;
+			of.close();
 			skybox_manager.Save();
 			texture_manager.Save();
 			shader_manager.Save();

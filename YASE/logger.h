@@ -27,7 +27,7 @@ class Logger
 public:
 	void Append(LOGLEVEL_ENUM ll, const char* file, int line, const char* msg)
 	{
-		char buf[150];
+		char buf[400];
 		sprintf(buf, "[%s][%s:%d] %s", LOGLEVEL_STRING[ll], file, line, msg);
 		std::unique_lock<std::mutex> lk(mutex);
 		logs.emplace_back(buf);

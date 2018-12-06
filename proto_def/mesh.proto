@@ -14,9 +14,9 @@ message Vertex {
 }
 
 message Mesh {
-	repeated Vertex vertices = 2;
-	repeated uint32 indices = 3;
-	repeated int32 textures_index = 4;
+	repeated Vertex vertices = 1;
+	repeated uint32 indices = 2;
+	repeated string texture_keys = 3;
 }
 
 message Model {

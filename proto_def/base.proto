@@ -17,6 +17,11 @@ message CameraPosition {
 	Vec3f front = 1;
 	Vec3f position = 2;
 	Vec3f height = 3;
+
+	float yaw = 4;
+	float pitch = 5;
+
+	string name = 6;
 }
 
 

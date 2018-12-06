@@ -181,6 +181,9 @@ public:
 		f->set_x(camera_front.x);
 		f->set_y(camera_front.y);
 		f->set_z(camera_front.z);
+		cp->set_name(name);
+		cp->set_pitch(pitch);
+		cp->set_yaw(yaw);
 	}
 
 	void load(const YASE::DEF::CameraPosition& cp)
@@ -193,6 +196,9 @@ public:
 		camera_front.x = f.x();
 		camera_front.y = f.y();
 		camera_front.z = f.z();
+		yaw = cp.yaw();
+		pitch = cp.pitch();
+		name = cp.name();
 	}
 };
 

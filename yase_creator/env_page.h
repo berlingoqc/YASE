@@ -15,10 +15,10 @@ class EnvironmentWindow {
 
 	bool				shader_panel = false;
 	bool				textures_panel = true;
-	bool				model_panel = false;
+	bool				model_panel = true;
 	bool				skybox_panel = true;
-	bool				camera_panel = false;
-	bool				scene_panel = false;
+	bool				camera_panel = true;
+	bool				scene_panel = true;
 
 
 	bool				textures_preview = false;
@@ -84,9 +84,11 @@ public:
 
 				if(ImGui::MenuItem("LOL"))
 				{
+					tex_man->AddNewLoadedTexture("house_side", "building1.jpg", YASE::DEF::REPEATED, YASE::DEF::LINEAR);
+					tex_man->AddNewLoadedTexture("house_roof", "toit2.jpg", YASE::DEF::REPEATED, YASE::DEF::LINEAR);
 					ModelManager* mm = loader->getModelManager();
 					try {
-						mm->AddModel("house", getDefaultModel());
+						mm->AddModel("building", getDefaultModel());
 					}
 					catch (const ModelException& ex) {
 						YASE_LOG_ERROR(ex.what());
@@ -194,20 +196,19 @@ public:
 
 					ImGui::TreePop();
 				}
-				if(ImGui::TreeNode("Texture charger"))
+				if(ImGui::TreeNode("Texture Charger"))
 				{
-					for(const auto& t : tex_man->getLoadedTextures())
+					for(const auto& t : tex_man->getLoadedtextures())
 					{
-						ImGui::Text("ID : %d GLID : %d", t.first, t.second);
+						ImGui::Text("KEY : %s GLID : %d", t.first.c_str(), t.second->gl_id);
 					}
-
 					ImGui::TreePop();
 				}
 				if(ImGui::Button("Afficher"))
 				{
 					if(selected_texture != -1)
 					{
-						text_id = tex_man->loadTexture(selected_texture);
+						//text_id = tex_man->loadTexture(selected_texture);
 						show_preview = true;
 					}
 					
@@ -318,7 +319,8 @@ public:
 						ImGui::OpenPopup("Nouvelle Scene");
 						popup_open = true;
 					}
-
+					ImGui::SetNextWindowSize({ 270,90 }, ImGuiCond_Always);
+					ImGui::SetNextWindowPosCenter();
 					if (ImGui::BeginPopupModal("Nouvelle Scene"))
 					{
 
@@ -396,7 +398,10 @@ public:
 						static string selected_model = "";
 						static int selection_mask = (1 << 2);
 
+						static float	translation_values[3];
 						static float	scale_values[3];
+						static float	rotation_values[3];
+						static float	rotation_angle = 0;
 
 						int i = 0;
 						for (const auto& b : current_scene->env_model_map)
@@ -417,6 +422,31 @@ public:
 									b.second->transformation.scale.x = scale_values[0];
 									b.second->transformation.scale.y = scale_values[1];
 									b.second->transformation.scale.z = scale_values[2];
+									b.second->updateModel();
+								}
+								translation_values[0] = b.second->transformation.translation.x; translation_values[1] = b.second->transformation.translation.y; translation_values[2] = b.second->transformation.translation.z;
+								// Control la matrice model
+								if(ImGui::DragFloat3("Translation", translation_values, 1, -1000, 1000))
+								{
+									b.second->transformation.translation.x = translation_values[0];
+									b.second->transformation.translation.y = translation_values[1];
+									b.second->transformation.translation.z = translation_values[2];
+									b.second->updateModel();
+								}
+								rotation_angle = b.second->transformation.angle_rotation;
+								if(ImGui::DragFloat("Angle", &rotation_angle, 1, -360, 360))
+								{
+									b.second->transformation.angle_rotation = rotation_angle;
+									b.second->updateModel();
+								}
+
+								rotation_values[0] = b.second->transformation.rotation.x; rotation_values[1] = b.second->transformation.rotation.y; rotation_values[2] = b.second->transformation.rotation.z;
+								// Control la matrice model
+								if(ImGui::DragFloat3("Rotation", rotation_values, 1, 0, 1))
+								{
+									b.second->transformation.rotation.x = rotation_values[0];
+									b.second->transformation.rotation.y = rotation_values[1];
+									b.second->transformation.rotation.z = rotation_values[2];
 									b.second->updateModel();
 								}
 								ImGui::TreePop();

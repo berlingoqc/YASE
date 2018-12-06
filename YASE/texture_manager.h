@@ -16,28 +16,44 @@
 namespace fs = std::filesystem;
 using namespace std;
 
+struct YaseTextureInfo {
+	YASE::DEF::Texture			texture; // Contient l'informations de la texture
+	YASE::DEF::TextureOption	option; // Contient les informations de chargement de la texture
+	uint						gl_id = ERROR_TEXTURE; // Contient l'id opengl de la texture si elle a ete loader
+};
 
 // TextureManager s'occupe de gerrer nos textures et de loader
 // ceux qu'on veut utiliser quand le temps est venu
 class TextureManager : public AssetManager {
-	int									index_texture = 0;
 	ENGINE::MyTexture					texture_loader; // Classe pour charger les textures
-	std::vector<YASE::DEF::Texture>		textures; // Liste de nos textures dans notre repertoire 
-	std::vector<std::string>			categories;
-	std::map<int, uint>					loaded_textures; // Liste des textures loader dans openGL, Key c'est leur ID
+	std::vector<YASE::DEF::Texture>		textures; // Liste de nos textures dans notre repertoire
+	std::vector<std::string>			categories; // Liste des catégories de texture ??
+	map<string, YaseTextureInfo*>		loaded_textures; // Contient les informations sur des textures avec les info de loading utiliser par un context donner
 
-	bool								is_loaded = false;
+	int nbr_loaded_gl;
 
 public:
 	virtual void saveManager(ostream* writer) {
 		YASE::DEF::TextureManager tm;
-		tm.set_index(index_texture);
+		// Sauvegarde les textures
 		for (auto i : textures)
 		{
 			auto* t = tm.add_textures();
 			*t = i;
 		}
-		if (!tm.SerializeToOstream(writer)){
+		// Sauvegarde les textures loaded
+		for (const auto& i : loaded_textures) {
+			auto*l = tm.add_loaded();
+			l->set_name(i.first);
+			YASE::DEF::TextureOption* to = new YASE::DEF::TextureOption();
+			*to = i.second->option;
+			l->set_allocated_option(to);
+			auto* t = new YASE::DEF::Texture(i.second->texture);
+			l->set_allocated_texture(t);
+		}
+
+
+		if (!tm.SerializeToOstream(writer)) {
 
 		}
 	}
@@ -46,12 +62,20 @@ public:
 		YASE::DEF::TextureManager env;
 		if (!env.ParseFromIstream(reader)) {
 		}
-		this->index_texture = env.index();
 		for (int i = 0; i < env.textures_size(); i++)
 		{
 			if (env.textures(i).name().empty())
 				continue;
 			this->textures.emplace_back(env.textures(i));
+		}
+
+		for(int i = 0;i < env.loaded_size();i++)
+		{
+			const auto& v = env.loaded(i);
+			YaseTextureInfo* yti = new YaseTextureInfo();
+			yti->option = v.option();
+			yti->texture = v.texture();
+			loaded_textures[v.name()] = yti;
 		}
 	}
 
@@ -60,66 +84,71 @@ public:
 		file_name = "tex.yase";
 	}
 
-	int getCurrentIndex()
-	{
-		return index_texture;
-	}
-
-	bool isLoaded() const
-	{
-		return is_loaded;
-	}
-
+	// Retourne la liste des fichiers de textures existants
 	vector<YASE::DEF::Texture>&	getTextures()
 	{
 		return textures;
 	}
 
-	const YASE::DEF::Texture& getTexture(int index)
-	{
-		for(const auto& t : textures)
-		{
-			if (t.id() == index)
-				return t;
-		}
-	}
-
-	map<int,uint>&	getLoadedTextures()
-	{
+	// Retourne la map des textures qui ont besoin d'etre loader ( avec leur settings )
+	const map<string, YaseTextureInfo*>& getLoadedtextures() {
 		return loaded_textures;
 	}
-	
+
+
+	// Retourne les informations d'une texture loader ( dependence d'un model )
+	YaseTextureInfo* getLoadedTextures(string name) {
+		if (const auto& i = loaded_textures.find(name); i != loaded_textures.end()) {
+			return i->second;
+		}
+		return nullptr;
+	}
+
+
+	// Retourne la listes des categories existantes
 	vector<string> getCategories() const {
 		return categories;
 	}
 
+	// Retourne le nombre de fichier de texture existant
 	int getTexturesCount() const {
 		return textures.size();
 	}
 
+	// Retounr le nombre de texture avec configuration existant
 	int getTexturesLoadedCount() const {
 		return loaded_textures.size();
 	}
 
-	bool isTexLoaded(int index)
-	{
-		return loaded_textures.count(index) > 0;
+	// Retourne le nombre de texture chargé dans opengl ( qui ont un handler)
+	int getGltextureCount() const {
+		return nbr_loaded_gl;
 	}
 
-	uint getTexGLID(int index)
+	uint getTexGLID(string name)
 	{
-		auto v = loaded_textures.find(index);
-		if (v == loaded_textures.end())
+		YaseTextureInfo* t = getLoadedTextures(name);
+		if (t == nullptr)
 			return ERROR_TEXTURE;
-		return v->second;
+		getTexGLID(t);
+		return t->gl_id;
 	}
 
-	vector<uint> loadTexture(vector<int> index)
+	void getTexGLID(YaseTextureInfo* t) {
+		fs::path p = root_folder / t->texture.category();
+		p = p / t->texture.name();
+		// Configure selon les parametre le texture loader
+		t->gl_id = texture_loader.GetTexture(p.string());
+		if (t->gl_id != ERROR_TEXTURE)
+			nbr_loaded_gl++;
+	}
+
+	vector<uint> loadTexture(vector<string> keys)
 	{
 		vector<uint> v;
-		for(const auto& i : index)
+		for(const auto& i : keys)
 		{
-			uint tid = loadTexture(i);
+			uint tid = getTexGLID(i);
 			if (tid == ERROR_TEXTURE)
 				continue;
 			v.emplace_back(tid);
@@ -127,31 +156,41 @@ public:
 		return v;
 	}
 
-	uint loadTexture(int index)
-	{
-		if(isTexLoaded(index))
-		{
-			return getTexGLID(index);
-		}
-		auto v = getTexture(index);
-		fs::path p = root_folder / v.category();
-		p = p / v.name();
-		uint tid = texture_loader.GetTexture(p.string());
-		if (tid == ERROR_TEXTURE)
-			return tid;
-		loaded_textures[index] = tid;
-		return tid;
+	YaseTextureInfo* loadTexture(string key) {
+
 	}
 
 
+	void AddNewLoadedTexture(string name, string tex_name, YASE::DEF::TexWrappingOptions w, YASE::DEF::TexFilterOptions f) {
+		// valide que la cle n'existe pas deja
+		YaseTextureInfo* yti = new YaseTextureInfo();
+		for(const auto& i : textures)
+		{
+			if(i.name() == tex_name)
+			{
+				yti->texture = i;
+				break;
+			}
+		}
+		if(yti->texture.name().empty())
+		{
+			// throw not found
+			delete yti;
+			return;
+		}
+		yti->option.set_filter(f);
+		yti->option.set_wrapping(w);
+		loaded_textures[name] = yti;
+	}
 
 
 	// AddNewTexture ajoute une nouvelle texture dans
 	// la liste et cree son information
 	bool AddNewTexture(fs::path filepath, string category = "default") {
-		if (!fs::exists(filepath))
+		if (!fs::exists(filepath)) {
 			return false;
-		fs::path dest = root_folder / category;
+		}
+		fs::path dest = root_folder / "default";
 		if (!fs::exists(dest)) {
 			YASE_LOG_INFO(("Creation du repertoire pour la categorie " + category).c_str());
 			if (!fs::create_directory(dest)) {
@@ -163,7 +202,7 @@ public:
 		dest = dest / filepath.filename();
 		if(fs::exists(dest))
 		{
-			return true; // retourne true si l'image existe deja dans le fichier de destination
+			return true;  // retourne true si l'image existe deja dans le fichier de destination
 		}
 		if (!fs::exists(dest) && !fs::copy_file(filepath, dest)) {
 			YASE_LOG_ERROR(("Echec de la copie du ficher" + filepath.string()).c_str());
@@ -173,6 +212,7 @@ public:
 		t.set_name(filepath.filename().string());
 		uint v = texture_loader.GetTexture(dest.string());
 		if (v == ERROR_TEXTURE) {
+			// Devrait tu supprimer le fichier ? oui
 			return false;
 		}
 		ENGINE::TextureFileInfo fi = texture_loader.getLastTextureInfo();
@@ -180,10 +220,9 @@ public:
 		t.set_channels(fi.channel);
 		t.set_height(fi.height);
 		t.set_width(fi.width);
-		t.set_id(index_texture);
-		index_texture++;
 		textures.emplace_back(t);
-		loaded_textures[t.id()] = v;
+
+		glDeleteTextures(1,&v);
 		return true;
 	}
 };

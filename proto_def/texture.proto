@@ -28,12 +28,12 @@ message Texture {
 }
 
 message LoadedTexture {
-    Texture texture = 1;
-    TextureOption option = 2;
+	string name = 1;
+    Texture texture = 2;
+    TextureOption option = 3;
 }
 
 message TextureManager {
-	int32 index = 1;
-    repeated Texture textures = 2;
-    repeated LoadedTexture loaded = 3;
+    repeated Texture textures = 1;
+    repeated LoadedTexture loaded = 2;
 }

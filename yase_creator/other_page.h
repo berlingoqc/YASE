@@ -15,63 +15,66 @@ struct CameraSettings
 		if (*p_open == false)
 			return;
 		static float fov = 70.0f;
-		if (ImGui::Begin("Camera", p_open))
-		{
-			ImGui::TextColored({ 255,255,0,1 }, "Nom : %s", camera->getName().c_str());
-			ImGui::Separator();
-			ImGui::Text("YAW %.2f PITCH %.2f", camera->getYaw(), camera->getPitch());
-			const auto& v = camera->getCameraPosition();
-			const auto& f = camera->getCameraFront();
-			const auto& u = camera->getCameraUp();
-			ImGui::Text("Position X : %.2f Y : %.2f Z : %.2f", v.x, v.y, v.z);
+		ImGui::Begin("Camera", p_open);
+			if (camera != nullptr) {
+				ImGui::TextColored({ 255,255,0,1 }, "Nom : %s", camera->getName().c_str());
+				ImGui::Separator();
+				ImGui::Text("YAW %.2f PITCH %.2f", camera->getYaw(), camera->getPitch());
+				const auto& v = camera->getCameraPosition();
+				const auto& f = camera->getCameraFront();
+				const auto& u = camera->getCameraUp();
+				ImGui::Text("Position X : %.2f Y : %.2f Z : %.2f", v.x, v.y, v.z);
 
 
-			if (ImGui::DragFloat("FOV", &fov, 1, 5, 180))
-			{
-				camera->setFOV(fov);
-			}
-			ImGuiIO& io = ImGui::GetIO();
-			ImGui::Button("Move Front");
-			if (ImGui::IsItemActive())
-			{
-				// Draw a line between the button and the mouse cursor
-				ImDrawList* draw_list = ImGui::GetWindowDrawList();
-				draw_list->PushClipRectFullScreen();
-				draw_list->AddLine(io.MouseClickedPos[0], io.MousePos, ImGui::GetColorU32(ImGuiCol_Button), 4.0f);
-				draw_list->PopClipRect();
-
-				// Drag operations gets "unlocked" when the mouse has moved past a certain threshold (the default threshold is stored in io.MouseDragThreshold)
-				// You can request a lower or higher threshold using the second parameter of IsMouseDragging() and GetMouseDragDelta()
-				ImVec2 value_raw = ImGui::GetMouseDragDelta(0);
-				ImGui::SameLine(); ImGui::Text("WithLockThresold (%.1f, %.1f)", value_raw.x, value_raw.y);
-				camera->move(value_raw.x*1.0f, value_raw.y*1.0f);
-
-				if (io.KeysDown[GLFW_KEY_A]) {
-					camera->left();
-				}
-				if (io.KeysDown[GLFW_KEY_W]) {
-					camera->forward();
-				}
-				if (io.KeysDown[GLFW_KEY_S]) {
-					camera->backward();
-				}
-				if (io.KeysDown[GLFW_KEY_D]) {
-					camera->right();
-				}
-				if (io.KeysDown[GLFW_KEY_Q])
+				if (ImGui::DragFloat("FOV", &fov, 1, 5, 180))
 				{
-					camera->down();
+					camera->setFOV(fov);
 				}
-				if (io.KeysDown[GLFW_KEY_E])
+				ImGuiIO& io = ImGui::GetIO();
+				ImGui::Button("Move Front");
+				if (ImGui::IsItemActive())
 				{
-					camera->up();
+					// Draw a line between the button and the mouse cursor
+					ImDrawList* draw_list = ImGui::GetWindowDrawList();
+					draw_list->PushClipRectFullScreen();
+					draw_list->AddLine(io.MouseClickedPos[0], io.MousePos, ImGui::GetColorU32(ImGuiCol_Button), 4.0f);
+					draw_list->PopClipRect();
+
+					// Drag operations gets "unlocked" when the mouse has moved past a certain threshold (the default threshold is stored in io.MouseDragThreshold)
+					// You can request a lower or higher threshold using the second parameter of IsMouseDragging() and GetMouseDragDelta()
+					ImVec2 value_raw = ImGui::GetMouseDragDelta(0);
+					ImGui::SameLine(); ImGui::Text("WithLockThresold (%.1f, %.1f)", value_raw.x, value_raw.y);
+					camera->move(value_raw.x*1.0f, value_raw.y*1.0f);
+
+					if (io.KeysDown[GLFW_KEY_A]) {
+						camera->left();
+					}
+					if (io.KeysDown[GLFW_KEY_W]) {
+						camera->forward();
+					}
+					if (io.KeysDown[GLFW_KEY_S]) {
+						camera->backward();
+					}
+					if (io.KeysDown[GLFW_KEY_D]) {
+						camera->right();
+					}
+					if (io.KeysDown[GLFW_KEY_Q])
+					{
+						camera->down();
+					}
+					if (io.KeysDown[GLFW_KEY_E])
+					{
+						camera->up();
+					}
 				}
-			}
-			else
+				else
+				{
+					camera->ResetMouse();
+				}
+			} else
 			{
-				camera->ResetMouse();
+				ImGui::Text("Vous devez avoir une scene active pour utiliser la camera !");
 			}
-		}
 		ImGui::End();
 	}
 };
@@ -111,27 +114,28 @@ struct ModelManager_Panel {
 	void Draw() {
 		if (show)
 		{
+			static char			bufNewModelName[50];
+			
 			ImGui::Begin("Model Manager", &show);
 			ImGui::TextColored({ 255,255,0,1 }, "Ajouter et configurer les models de votre environment");
 			ImGui::Separator();
 			ImGui::Text("Model total : %d Model charger : %d", model_manager->getNumberModel(), model_manager->getNumberLoadedModel());
 			ImGui::Separator();
+			ImGui::PushItemWidth(150);
+			ImGui::InputText("## 1", bufNewModelName, 50);
+			ImGui::PopItemWidth();
 			if (ImGui::Button("Importer nouveau model")) {
 				// Importer un model existant dans les exenstions suivantes obj et yase model
 				fx.Start();
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("Cree nouveau model")) {
-				// Affiche la fenetre pour cree un nouveau model
-			}
-
 			if (fx.waiting_data) { // Si on attend un fichier pour l'importer
 				fx.Draw();
 				if (fx.is_close) {
 					fx.waiting_data = false;
 					fs::path p = fx.selected_current;
 					if (!p.empty()) {
-						model_manager->AddModelAssimp("statue_lib", p);
+						model_manager->AddModelAssimp(bufNewModelName, p);
 					}
 				}
 			}
@@ -159,7 +163,23 @@ struct ModelManager_Panel {
 						{
 							/// Si le model est loader on affiche c'est informations detailler sur les meshes
 							// Affiche le total de mesh 
-
+							if(ImGui::TreeNode("Mesh"))
+							{
+								for(auto& m : t.second->meshes)
+								{
+									static string need_tex;
+									int i = 0;
+									for(auto& tex : m.needed_texture)
+									{
+										if(ImGui::Button(tex.c_str()))
+										{
+											m.needed_texture.erase(m.needed_texture.begin() + i);
+										}
+										i++;
+									}
+								}
+								ImGui::TreePop();
+							}
 							// Affiche un treenode pour chaque mesh
 						}
 
