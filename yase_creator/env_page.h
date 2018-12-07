@@ -297,6 +297,8 @@ public:
 						if(scene_item_current >= -1)
 						{
 							current_scene = loader->getSceneManager()->loadScene(scene_items[scene_item_current]);
+							auto& io = ImGui::GetIO();
+							current_scene->setSceneSize(io.DisplaySize.x, io.DisplaySize.y);
 							camera_settings_window.camera = &current_scene->work_camera;
 						}
 						
@@ -343,6 +345,10 @@ public:
 					static vector<const char*> add_model_list = loader->getModelManager()->getKeys();
 					static char	add_mode_name[100];
 
+					static vector<string> delete_list;
+
+					static float plane_dist[2] { 0.1, 800};
+
 
 					ImGui::TextColored({ 255,255,0,1 }, "Scene active %s", current_scene->name.c_str());
 					ImGui::Separator();
@@ -381,6 +387,13 @@ public:
 							current_scene->addEnvironmentModel(add_mode_name, add_model_list[selected_add_model]);
 						}
 					}
+					ImGui::Separator();
+					if(ImGui::DragFloat2("Plane",plane_dist,0.1,0,10000))
+					{
+						current_scene->near_plane = plane_dist[0];
+						current_scene->rear_plane = plane_dist[1];
+					}
+					ImGui::Separator();
 					if (ImGui::TreeNode("Model statique")) {
 						static int selected_index = -1;
 						static string selected_model = "";
@@ -437,6 +450,15 @@ public:
 									b.second->transformation.rotation.z = rotation_values[2];
 									b.second->updateModel();
 								}
+								if(ImGui::Button("Duplicate"))
+								{
+									
+								}
+								ImGui::SameLine();
+								if(ImGui::Button("Supprimer"))
+								{
+									delete_list.push_back(b.first);
+								}
 								ImGui::TreePop();
 							}
 							i++;
@@ -445,7 +467,10 @@ public:
 						{
 							selection_mask = (1 << selected_index);
 						}
-
+						for (const auto& t : delete_list) {
+							current_scene->removeEnvironmentModel(t);
+						}
+						delete_list.clear();
 						ImGui::TreePop();
 					}
 

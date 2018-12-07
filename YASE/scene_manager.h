@@ -227,6 +227,7 @@ public:
 	ENGINE::Shrapper				shader_texture;
 	ENGINE::Shrapper				shader_skybox;
 
+
 	int								w_height, w_width;
 	float							near_plane = 0.1f;
 	float							rear_plane = 800.0f;
@@ -280,7 +281,6 @@ public:
 		
 		return nullptr;
 	}
-		
 
 	void setActiveSkybox(string name)
 	{
@@ -296,8 +296,24 @@ public:
 		sky_box_generator.setTexture(u);
 	}
 
+	void removeEnvironmentModel(string name)
+	{
+		if (const auto& p = env_model_map.find(name); p == env_model_map.end() || name.empty())
+			return;
+		if(env_model_map[name] !=nullptr)
+		{
+			delete env_model_map[name];
+			env_model_map.erase(name);
+		}
+	}
+
 	void addEnvironmentModel(string name, string model_key)
 	{
+		if(name.empty())
+		{
+			YASE_LOG_ERROR("Aucun nom pour la cle du model de l'environment\n");
+			return;
+		}
 		if (const auto& p = env_model_map.find(name); p != env_model_map.end() || name.empty())
 			return;
 		StaticModel* smodel = new StaticModel();
@@ -357,7 +373,7 @@ public:
 		glm::mat4	projection;
 		glm::mat4	modele;
 
-		projection = glm::perspective(glm::radians(work_camera.getFOV()), (w_width / w_height) * 1.0f, 0.1f, 800.0f);
+		projection = glm::perspective(glm::radians(work_camera.getFOV()), (w_width / w_height) * 1.0f, near_plane, rear_plane);
 
 		// DRAW LA SKYBOX SI N'A UNE
 		if (!active_skybox.empty()) {
