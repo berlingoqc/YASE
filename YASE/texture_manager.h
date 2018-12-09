@@ -2,19 +2,20 @@
 #define TEXTURE_MANAGER_H
 
 #include <iostream>
-#include <filesystem>
 #include <string>
 #include <map>
 #include <iostream>
 #include <fstream>
 #include "logger.h"
-#include "texture.pb.h"
 #include "textures.h"
 
 #include "base_manager.h"
 
-namespace fs = std::filesystem;
+#include <yas/serialize.hpp>
+#include <yas/std_types.hpp>
+
 using namespace std;
+
 
 struct YaseTextureInfo {
 	YASE::DEF::Texture			texture; // Contient l'informations de la texture
@@ -34,49 +35,17 @@ class TextureManager : public AssetManager {
 
 public:
 	virtual void saveManager(ostream* writer) {
-		YASE::DEF::TextureManager tm;
-		// Sauvegarde les textures
-		for (auto i : textures)
-		{
-			auto* t = tm.add_textures();
-			*t = i;
-		}
-		// Sauvegarde les textures loaded
-		for (const auto& i : loaded_textures) {
-			auto*l = tm.add_loaded();
-			l->set_name(i.first);
-			YASE::DEF::TextureOption* to = new YASE::DEF::TextureOption();
-			*to = i.second->option;
-			l->set_allocated_option(to);
-			auto* t = new YASE::DEF::Texture(i.second->texture);
-			l->set_allocated_texture(t);
-		}
 
-
-		if (!tm.SerializeToOstream(writer)) {
-
-		}
 	}
 
 	virtual void loadManager(ifstream* reader) {
-		YASE::DEF::TextureManager env;
-		if (!env.ParseFromIstream(reader)) {
-		}
-		for (int i = 0; i < env.textures_size(); i++)
-		{
-			if (env.textures(i).name().empty())
-				continue;
-			this->textures.emplace_back(env.textures(i));
-		}
 
-		for(int i = 0;i < env.loaded_size();i++)
-		{
-			const auto& v = env.loaded(i);
-			YaseTextureInfo* yti = new YaseTextureInfo();
-			yti->option = v.option();
-			yti->texture = v.texture();
-			loaded_textures[v.name()] = yti;
-		}
+	}
+
+	template<typename Ar>
+	void serialize(Ar& ar)
+	{
+		//ar & YASE_OBJECT(nullptr,textures);
 	}
 
 	TextureManager() :
@@ -135,8 +104,8 @@ public:
 	}
 
 	void getTexGLID(YaseTextureInfo* t) {
-		fs::path p = root_folder / t->texture.category();
-		p = p / t->texture.name();
+		fs::path p = root_folder;
+		p = p / t->texture.name;
 		// Configure selon les parametre le texture loader
 		t->gl_id = texture_loader.GetTexture(p.string());
 		if (t->gl_id != ERROR_TEXTURE)
@@ -166,20 +135,20 @@ public:
 		YaseTextureInfo* yti = new YaseTextureInfo();
 		for(const auto& i : textures)
 		{
-			if(i.name() == tex_name)
+			if(i.name == tex_name)
 			{
 				yti->texture = i;
 				break;
 			}
 		}
-		if(yti->texture.name().empty())
+		if(yti->texture.name.empty())
 		{
 			// throw not found
 			delete yti;
 			return;
 		}
-		yti->option.set_filter(f);
-		yti->option.set_wrapping(w);
+		yti->option.filter = f;
+		yti->option.wrapping = w;
 		loaded_textures[name] = yti;
 	}
 
@@ -190,14 +159,10 @@ public:
 		if (!fs::exists(filepath)) {
 			return false;
 		}
-		fs::path dest = root_folder / "default";
+		fs::path dest = root_folder;
 		if (!fs::exists(dest)) {
 			YASE_LOG_INFO(("Creation du repertoire pour la categorie " + category).c_str());
-			if (!fs::create_directory(dest)) {
-				YASE_LOG_ERROR(("Echec de la creation repertoire" + dest.string()).c_str());
-				return false;
-			}
-			categories.emplace_back(category);
+			return false;
 		}
 		dest = dest / filepath.filename();
 		if(fs::exists(dest))
@@ -209,17 +174,17 @@ public:
 			return false;
 		}
 		YASE::DEF::Texture t;
-		t.set_name(filepath.filename().string());
+		t.name = filepath.filename().string();
 		uint v = texture_loader.GetTexture(dest.string());
 		if (v == ERROR_TEXTURE) {
 			// Devrait tu supprimer le fichier ? oui
 			return false;
 		}
 		ENGINE::TextureFileInfo fi = texture_loader.getLastTextureInfo();
-		t.set_category(category);
-		t.set_channels(fi.channel);
-		t.set_height(fi.height);
-		t.set_width(fi.width);
+		t.category = category;
+		t.channels = fi.channel;
+		t.height=fi.height;
+		t.width = fi.width;
 		textures.emplace_back(t);
 
 		glDeleteTextures(1,&v);

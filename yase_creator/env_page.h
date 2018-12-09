@@ -127,7 +127,7 @@ public:
 			static bool add_new_texture = false;
 			static FileExplorer fx;
 
-			static int selected_texture = -1;
+			
 			static bool show_preview = false;
 
 			ImGui::Begin("Textures environment", &textures_panel);
@@ -154,32 +154,39 @@ public:
 						}
 					}
 				}
-				
+
+				static int	  selected_index = -1;
+				static string selected_texture = "";
 				static int selection_mask = (1 << 2);
 				static uint text_id = ERROR_TEXTURE;
+
 				// Section liste de mes textures loader
 				int i = 0;
+
 				if (ImGui::TreeNode("Textures")) {
 					for(const auto& t : tex_man->getTextures())
 					{
 						ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ((selection_mask & (1 << i)) ? ImGuiTreeNodeFlags_Selected : 0);
 						// Node
-						bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, "%d %s",t.id(), t.name().c_str());
+						bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, "%s", t.name.c_str());
 						if (ImGui::IsItemClicked())
-							selected_texture = t.id();
+						{
+							selected_texture = t.name;
+							selected_index = i;
+						}
 						if (node_open)
 						{
-							ImGui::Text("Category %s",t.category().c_str());
-							ImGui::Text("Dimension %d x %d", t.width(), t.height());
-							ImGui::Text("Channel %d", t.channels());
+							ImGui::Text("Category %s",t.category.c_str());
+							ImGui::Text("Dimension %d x %d", t.width, t.height);
+							ImGui::Text("Channel %d", t.channels);
 							
 							ImGui::TreePop();
 						}
 						i++;
 					}
-					if(selected_texture != -1)
+					if(selected_index != -1)
 					{
-						selection_mask = (1 << selected_texture);
+						selection_mask = (1 << selected_index);
 					}
 
 					ImGui::TreePop();
@@ -194,7 +201,7 @@ public:
 				}
 				if(ImGui::Button("Afficher"))
 				{
-					if(selected_texture != -1)
+					if(!selected_texture.empty())
 					{
 						//text_id = tex_man->loadTexture(selected_texture);
 						show_preview = true;
@@ -262,7 +269,7 @@ public:
 						}
 						if (node_open)
 						{
-							ImGui::Text("Extensions %s", get<0>(b.second).ext().c_str());
+							ImGui::Text("Extensions %s", get<0>(b.second).ext.c_str());
 
 							ImGui::TreePop();
 						}
@@ -329,6 +336,11 @@ public:
 							{
 								current_scene = loader->getSceneManager()->getActiveScene();
 								camera_settings_window.camera = &current_scene->work_camera;
+
+								//loader->getSkyBoxManager()->AddSkyBox("lol", "model/bbb");
+								loader->getModelManager()->AddModel("lol", {});
+								current_scene->addEnvironmentModel("totem_1", "lol.model");
+								//current_scene->setActiveSkybox("lol");
 							}
 						}
 
@@ -480,7 +492,7 @@ public:
 	}
 
 	void Draw(bool* over) {
-		if (run_main_loop = false) {
+		if (run_main_loop == false) {
 			*over = true;
 		}
 

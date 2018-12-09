@@ -1,11 +1,12 @@
-#version 430 core
 
-in vec2 TexCoord;
+precision mediump float;
 
-out vec4 fragColor;
+in lowp vec2 TexCoord;
 
-uniform sampler2D ourTexture1;
+out lowp vec4 fragColor;
+
+//uniform sampler2D ourTexture1;
 
 void main(void) {
-	fragColor = texture(ourTexture1, TexCoord);
+	fragColor = vec4(0.5, 0.5, 0.5, 1);// texture(ourTexture1, TexCoord);
 }

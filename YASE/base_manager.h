@@ -1,16 +1,15 @@
 #ifndef BASE_MANAGER_H
 #define BASE_MANAGER_H
 
-#include <filesystem>
 #include <iostream>
 #include <string>
 #include <map>
 #include <iostream>
 #include <fstream>
 
-
-namespace fs = std::filesystem;
-using namespace std;
+#include "model.h"
+#include <yas/serialize.hpp>
+#include <yas/std_types.hpp>
 
 struct FileDontExist : public std::exception {
 

@@ -1,11 +1,8 @@
 #ifndef CAMERA_H
 #define CAMERA_H
-#include <glm/vec3.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <vector>
-#include <GL/glew.h>
 
+#include "header.h"
+#include "model.h"
 enum DIRECTION_CAM
 {
 	DIR_LEFT, DIR_RIGHT, DIR_FORWARD, DIR_BACKWARD
@@ -27,14 +24,12 @@ class FPSCamera
 	float	last_x = 0;
 	float	last_y = 0;
 
-	bool	wrap_mouse = true;
 	bool	first_mouse = 0;
 
 	bool	move_y = false;
 
 	glm::vec3	camera_speed = { 0.8f,2.0f,0.8f };
 
-	float	rotate_speed = 1.0f;
 
 
 	glm::vec3 getCamForward() const {
@@ -157,42 +152,35 @@ public:
 
 	void save(YASE::DEF::CameraPosition* cp)
 	{
-		auto* p = cp->mutable_position();
-		p->set_x(camera_pos.x);
-		p->set_y(camera_pos.y);
-		p->set_z(camera_pos.z);
-		auto* f = cp->mutable_front();
-		f->set_x(camera_front.x);
-		f->set_y(camera_front.y);
-		f->set_z(camera_front.z);
-		cp->set_name(name);
-		cp->set_pitch(pitch);
-		cp->set_yaw(yaw);
-		cp->set_fov(fov);
-		auto* s = cp->mutable_speed();
-		s->set_x(camera_speed.x);
-		s->set_y(camera_speed.y);
-		s->set_z(camera_speed.z);
+		cp->position.x  = camera_pos.x;
+		cp->position.y = camera_pos.y;
+		cp->position.z = camera_pos.z;
+		cp->front.x = camera_front.x;
+		cp->front.y = camera_front.y;
+		cp->front.z = camera_front.z;
+		cp->name = name;
+		cp->pitch = pitch;
+		cp->yaw = yaw;
+		cp->fov = fov;
+		cp->speed.x=camera_speed.x;
+		cp->speed.y=camera_speed.y;
+		cp->speed.z=camera_speed.z;
 	}
 
 	void load(const YASE::DEF::CameraPosition& cp)
 	{
-		auto& p = cp.position();
-		camera_pos.x = p.x();
-		camera_pos.y = p.y();
-		camera_pos.z = p.z();
-		auto& f = cp.front();
-		camera_front.x = f.x();
-		camera_front.y = f.y();
-		camera_front.z = f.z();
-		yaw = cp.yaw();
-		pitch = cp.pitch();
-		name = cp.name();
-		fov = cp.fov();
-		auto& s = cp.speed();
-		camera_speed.x = s.x();
-		camera_speed.y = s.y();
-		camera_speed.z = s.z();
+		camera_pos.x = cp.position.x;
+		camera_pos.y = cp.position.y;
+		camera_pos.z = cp.position.z;
+		camera_front.x = cp.front.x;
+		camera_front.y = cp.front.y;
+		camera_front.z = cp.front.z;
+		pitch = cp.pitch;
+		name = cp.name;
+		fov = cp.fov;
+		camera_speed.x = cp.speed.x;
+		camera_speed.y = cp.speed.y;
+		camera_speed.z = cp.speed.z;
 	}
 };
 

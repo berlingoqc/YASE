@@ -4,7 +4,6 @@
 #include "base_manager.h"
 #include "textures.h"
 #include "logger.h"
-#include "skybox.pb.h"
 
 typedef std::map<std::string, std::tuple<YASE::DEF::SkyBox, uint>> MapSkyBox;
 
@@ -27,27 +26,11 @@ public:
 	}
 
 	virtual void saveManager(ostream* writer) {
-		YASE::DEF::SkyBoxManager m;
-		for (const auto& i : boxes)
-		{
-			auto b = m.add_boxs();
-			*b = std::get<0>(i.second);
-		}
-		if (!m.SerializeToOstream(writer)) {
 
-		}
 	}
 
 	virtual void loadManager(ifstream* reader) {
-		YASE::DEF::SkyBoxManager m;
-		if (!m.ParseFromIstream(reader)) {
 
-		}
-		for (int i = 0; i < m.boxs_size(); i++)
-		{
-			auto e = m.boxs(i);
-			boxes[e.name()] = std::make_tuple(e, ERROR_TEXTURE);
-		}
 	}
 
 	SkyBoxManager() : texture_loader(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, GL_RGB)
@@ -98,7 +81,7 @@ public:
 		for(const auto& f : fs::directory_iterator(directory))
 		{
 			fs::path fp = fs::path(f);
-			if (f.is_directory()) { // si on trouve un repertoire en dedans  c'est pas bon
+			if (fs::is_directory(fp)) { // si on trouve un repertoire en dedans  c'est pas bon
 				YASE_LOG_ERROR(("Impossible cree skybox il y a un repertoire dans le dossier source " + fp.string() + "\n").c_str());
 				return false;
 			}
@@ -126,8 +109,8 @@ public:
 		}
 		fs::copy(directory, dest);
 		YASE::DEF::SkyBox b;
-		b.set_name(name);
-		b.set_ext(ext);
+		b.name = name;
+		b.ext = ext;
 		boxes[name] = std::make_tuple(b, ERROR_TEXTURE);
 		return true;
 	}
@@ -145,9 +128,9 @@ public:
 		const auto sb = std::get<0>(b->second);
 		for(int i = 0;i<6;i++)
 		{
-			fs::path p = root_folder / sb.name();
+			fs::path p = root_folder / sb.name;
 			p = p / skybox_files[i];
-			faces.emplace_back(p.string().append(sb.ext()));
+			faces.emplace_back(p.string().append(sb.ext));
 		}
 		uint tid = texture_loader.GetTextureSky(faces);
 		loaded_skybox_index++;

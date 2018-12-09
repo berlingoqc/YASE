@@ -6,7 +6,6 @@
 #include "camera.h"
 #include <glm/vec3.hpp>
 #include "shaders.h"
-#include "scene.pb.h"
 
 
 class SkyBoxGenerator
@@ -107,38 +106,14 @@ struct MatriceModel
 
 	void save(YASE::DEF::MatriceModel* mm)
 	{
-		auto* p = mm->mutable_rotation();
-		p->set_x(rotation.x);
-		p->set_y(rotation.y);
-		p->set_z(rotation.z);
-		auto* t = mm->mutable_translation();
-		t->set_x(translation.x);
-		t->set_y(translation.y);
-		t->set_z(translation.z);
-		auto* s = mm->mutable_scale();
-		s->set_x(scale.x);
-		s->set_y(scale.y);
-		s->set_z(scale.z);
-		mm->set_angle_rotation(angle_rotation);
+	
 		
 		
 	}
 
 	void load(const YASE::DEF::MatriceModel& mm)
 	{
-		auto& p = mm.translation();
-		translation.x = p.x();
-		translation.y = p.y();
-		translation.z = p.z();
-		auto& s = mm.scale();
-		scale.x = s.x();
-		scale .y = s.y();
-		scale.z = s.z();
-		auto& r = mm.rotation();
-		rotation.x = r.x();
-		rotation.y = r.y();
-		rotation.z = r.z();
-		angle_rotation = mm.angle_rotation();
+		
 	}
 };
 
@@ -170,15 +145,15 @@ struct StaticModel
 
 	void save(YASE::DEF::InitialModel* im)
 	{
-		im->set_model_key(model_key);
-		auto* mt = im->mutable_transformation();
-		transformation.save(mt);
+		//im->set_model_key(model_key);
+		//auto* mt = im->mutable_transformation();
+		//transformation.save(mt);
 	}
 
 	void load(const YASE::DEF::InitialModel& im)
 	{
-		model_key = im.model_key();
-		transformation.load(im.transformation());
+		//model_key = im.model_key();
+		//transformation.load(im.transformation());
 	}
 
 	void updateModel()
@@ -252,7 +227,7 @@ public:
 			return;
 		}
 		this->shader_skybox = shader.GetShaderID();
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		sky_box_generator.Allocate();
 	}
 	BaseScene(TextureManager* tm, SkyBoxManager* sbm, ModelManager* mm, int height, int width)  : BaseScene()
@@ -324,36 +299,36 @@ public:
 
 	void save(YASE::DEF::Scene* scene)
 	{
-		scene->set_name(name);
-		scene->set_skybox_name(active_skybox);
-		auto* work_cam = scene->mutable_work_camera();
-		work_camera.save(work_cam);
+		//scene->set_name(name);
+		//scene->set_skybox_name(active_skybox);
+		//auto* work_cam = scene->mutable_work_camera();
+		//work_camera.save(work_cam);
 
 		// Sauvegarde nos models statique de l'environment
-		for(const auto& i : env_model_map)
-		{
-			YASE::DEF::InitialModel* im = scene->add_initial_models();
-			im->set_name(i.first);
-			i.second->save(im);
-		}
+		//for(const auto& i : env_model_map)
+		//{
+		//	YASE::DEF::InitialModel* im = scene->add_initial_models();
+		//	im->set_name(i.first);
+		//	i.second->save(im);
+		//}
 		
 	}
 
 	void load(const YASE::DEF::Scene& scene)
 	{
-		name = scene.name();
-		active_skybox = scene.skybox_name();
-		const auto& wc = scene.work_camera();
-		work_camera.load(wc);
+		//name = scene.name();
+		//active_skybox = scene.skybox_name();
+		//const auto& wc = scene.work_camera();
+		//work_camera.load(wc);
 
 		// Load nos models statique de l'environment
-		for(int i = 0;i<scene.initial_models_size();i++)
-		{
-			const auto& im = scene.initial_models(i);
-			StaticModel* sm = new StaticModel();
-			sm->load(im);
-			env_model_map[im.name()] = sm;
-		}
+		//for(int i = 0;i<scene.initial_models_size();i++)
+		//{
+		//	const auto& im = scene.initial_models(i);
+		//	StaticModel* sm = new StaticModel();
+		//	sm->load(im);
+		//	env_model_map[im.name()] = sm;
+		//}
 
 	}
 
@@ -395,6 +370,7 @@ public:
 			if(m.second->model != nullptr)
 			{
 				shader_texture.setMat4("gModele", m.second->mat_model);
+				m.second->model->meshes[0].Allocate(shader_texture.getID());
 				m.second->model->Draw(shader_texture.getID());
 			}
 			
@@ -429,37 +405,13 @@ public:
 
 	virtual void saveManager(ostream* writer) override
 	{
-		YASE::DEF::ListScene ls;
-		for(auto& s : scene)
-		{
-			YASE::DEF::Scene* ds = ls.add_scenes();
-			s.second.save(ds);
-		}
-		if(!ls.SerializeToOstream(writer))
-		{
-			
-		}
+		
 		
 	}
 
 	virtual void loadManager(ifstream* reader) override
 	{
-		YASE::DEF::ListScene ls;
-		if(!ls.ParseFromIstream(reader))
-		{
-			return;
-		}
-		for(int i = 0; i < ls.scenes_size();i++)
-		{
-			const auto& s = ls.scenes(i);
-			scene[s.name()] = BaseScene(tex_manager, skybox_manager, model_manager, 1600, 900);
-			active_scene_name = s.name();
-			active_scene = &scene[s.name()];
-			active_scene->name = s.name();
-			active_scene->active_skybox = s.skybox_name();
-			active_scene->work_camera.load(s.work_camera());
-			active_scene->load(s);
-		}
+		
 		
 	}
 

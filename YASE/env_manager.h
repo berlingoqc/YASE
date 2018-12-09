@@ -1,7 +1,8 @@
 #ifndef ENV_MANAGER_H
 #define ENV_MANAGER_H
 
-#include <filesystem>
+#include "header.h"
+
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -17,13 +18,9 @@
 #include "scene_manager.h"
 #include "animation_manager.h"
 
-#include "base.pb.h"
-#include "env.pb.h"
 
 using namespace std;
 using namespace ENGINE;
-
-namespace fs = std::filesystem;
 
 
 	class EnvManager
@@ -111,6 +108,12 @@ namespace fs = std::filesystem;
 
 			initFolderManager();
 
+			scene_manager.skybox_manager = &skybox_manager;
+			scene_manager.model_manager = &model_manager;
+			scene_manager.tex_manager = &texture_manager;
+
+			model_manager.tex_manager = &texture_manager;
+
 			texture_manager.Save();
 			skybox_manager.Save();
 			model_manager.Save();
@@ -123,17 +126,7 @@ namespace fs = std::filesystem;
 
 		bool save()
 		{
-			YASE::DEF::Environment env;
-			env.set_name(this->name);
-			env.set_root(root_folder.string());
 
-			// Get les variable de sauvegarde des autres aussi
-
-			fs::path fn = root_folder / env_file_name;
-			ofstream of(fn.string().c_str(), std::ios_base::out | std::ios_base::trunc | std::ios::binary);
-			if (!env.SerializeToOstream(&of))
-				return false;
-			of.close();
 			skybox_manager.Save();
 			texture_manager.Save();
 			shader_manager.Save();
@@ -150,11 +143,11 @@ namespace fs = std::filesystem;
 			if (!inf.is_open())
 				return false;
 			YASE::DEF::Environment env;
-			if (!env.ParseFromIstream(&inf))
-				return false;
+
+
 			inf.close();
 
-			this->name = env.name();
+			this->name = env.name;
 			this->root_folder = filepath.parent_path();
 
 			initFolderManager();

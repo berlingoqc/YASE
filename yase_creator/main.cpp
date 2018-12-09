@@ -2,21 +2,16 @@
 #include <iostream>
 
 #include "header.h"
-#include <GLFW/glfw3.h>
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_other.h"
+
 #include "home.h"
 #include "env_page.h"
 
-/*
- *	Truc a finir asap
- *	
- *	1 - Finir mon model manager. Avec le convetissement de .obj et l'ajout de leur texture dans le texture manager. Ma commencer avec mon cube blender
- *  2 - Faire le scene manager. Avec la sauvegarde de l'environnement et comment je vais representer mes donners.
- *
- */
+
 
 using namespace std;
 
@@ -41,7 +36,9 @@ class YASECreator
 	EnvironmentWindow env_window;
 
 	YASECreator_state state;
+
 public:
+	bool			 over = false;
 	YASECreator() : home_window(&environment_loader),
 		env_window(&environment_loader),
 		state(HOME_PAGE),
@@ -55,6 +52,8 @@ public:
 			std::cerr << "Erreur initialisation glfw" << std::endl;
 			return;
 		}
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
 		GLFWwindow*	window = glfwCreateWindow(1600, 900, "TP Ville Procedurale", nullptr, nullptr);
 		if (!window)
@@ -66,7 +65,9 @@ public:
 		glfwMakeContextCurrent(window);
 		glfwSwapInterval(1); // vsync
 
+#ifndef EMSCRIPTEN
 		int v = glewInit();
+#endif
 
 		float z = 1.0f;
 
@@ -75,11 +76,10 @@ public:
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
 		// Setup Platform/Renderer bindings
 		ImGui_ImplGlfw_InitForOpenGL(window, true);
-		ImGui_ImplOpenGL3_Init("#version 430");
+		ImGui_ImplOpenGL3_Init(SHADER_VERSION);
 
 		// Setup Style
 		ImGui::StyleColorsDark();
@@ -93,8 +93,10 @@ public:
 		glDepthFunc(GL_LEQUAL);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#ifndef EMSCRIPTEN
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+#endif
+		glClearColor(0.6f, 0.5f, 0.05f, 1.0f);
 
 		this->window = window;
 	}
@@ -104,76 +106,91 @@ public:
 		static bool home_page_over = false;
 		static bool env_page_over = false;
 
-		while (!glfwWindowShouldClose(window))
+		if(glfwWindowShouldClose(window))
 		{
-			// Regenere mes nouvelles frame de ImGui
-			ImGui_ImplOpenGL3_NewFrame();
-			ImGui_ImplGlfw_NewFrame();
-			ImGui::NewFrame();
+			over = true;
+			printf("Window shot close bye bye\n");
+			END_PROGRAM(EXIT_SUCCESS);
+		}
+		// Regenere mes nouvelles frame de ImGui
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			// Ma section de rendering
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// Ma section de rendering
 
 
-			
-
-			// Affiche les overlay selon dans qu'elle monde on aie
-			switch (state)
+		switch (state)
+		{
+		case HOME_PAGE:
+			home_window.Draw(&home_page_over,&home_page_over);
+			if(home_page_over)
 			{
-			case HOME_PAGE:
-				home_window.Draw(&home_page_over,&home_page_over);
-				if(home_page_over)
-				{
-					state = CREATOR;
-				}
-
-				break;
-			case CREATOR:
-				env_window.Draw(&env_page_over);
-				if (env_page_over) {
-
-				}
-				break;
+				state = CREATOR;
 			}
 
+			break;
+		case CREATOR:
+			env_window.Draw(&env_page_over);
+			if (env_page_over) {
 
-			// Rendering de ImGui par dessus mon stock
-			ImGui::Render();
-			int display_w, display_h;
-			glfwMakeContextCurrent(window);
-			glfwGetFramebufferSize(window, &display_w, &display_h);
-			glViewport(0, 0, display_w, display_h);
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-
-			glfwMakeContextCurrent(window);
-
-			glfwSwapBuffers(window);
-
-			glfwPollEvents();
+			}
+			break;
 		}
 
+
+		// Rendering de ImGui par dessus mon stock
+		ImGui::Render();
+		int display_w, display_h;
+		glfwMakeContextCurrent(window);
+		glfwGetFramebufferSize(window, &display_w, &display_h);
+		glViewport(0, 0, display_w, display_h);
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+
+		glfwMakeContextCurrent(window);
+
+		glfwSwapBuffers(window);
+
+		glfwPollEvents();
+
 	}
-
-
 
 
 	void shutdown()
 	{
 		glfwTerminate();
 	}
-
-
-
 	
 };
+YASECreator c;
+
+void run_main()
+{
+	c.mainLoop();
+}
+
+void run_main_loop()
+{
+	while(!c.over)
+	{
+		c.mainLoop();
+	}
+	printf("End of main loop\n");
+}
 
 
 int main()
 {
-	YASECreator c;
+
 	c.init();
-	c.mainLoop();
+#ifdef EMSCRIPTEN
+	emscripten_set_main_loop(run_main, 0,1);
+#else
+	c.init();
+	run_main_loop();
 	c.shutdown();
+#endif
 	return 0;
 }

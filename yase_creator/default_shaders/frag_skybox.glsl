@@ -1,9 +1,9 @@
-#version 430 core
 
+precision mediump float;
 in vec3 TexCoord;
 
 out vec4 fragColor;
-
+precision lowp sampler3D;
 uniform samplerCube Skybox;
 
 

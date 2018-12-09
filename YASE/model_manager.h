@@ -6,24 +6,33 @@
 #include <assimp/postprocess.h>
 
 #include <iostream>
-#include <filesystem>
 #include <string>
 #include <map>
 #include <iostream>
 #include <fstream>
 #include "logger.h"
-#include "texture.pb.h"
-#include "mesh.pb.h"
 #include "textures.h"
 
 #include "base_manager.h"
 #include "texture_manager.h"
 #include "mesh.h"
-#include "mesh.pb.h"
 
-namespace fs = std::filesystem;
 using namespace Assimp;
 using namespace std;
+
+
+static glm::vec3	vertex_base[4]
+{
+	{-500,0,-500}, {500,0,-500}, {-500,0,500}, {500,0,500}
+};
+static unsigned int	indice_base[6]
+{
+	0,1,2,1,2,3
+};
+static glm::vec2	tex_bas[4]
+{
+	{0.0,0.0}, {100,0}, {0,100}, {100,100}
+};
 
 
 
@@ -51,43 +60,35 @@ public:
 
 	YaseMesh(const YASE::DEF::Mesh& m)
 	{
-		for(int i = 0 ; i < m.vertices_size(); i++)
+		for(const auto& v : m.vertices)
 		{
 			Vertex		vertex;
 			glm::vec3	vector;
-			const auto&  v = m.vertices(i);
-			vector.x = v.position().x();
-			vector.y = v.position().y();
-			vector.z = v.position().z();
+			vector.x = v.position.x;
+			vector.y = v.position.y;
+			vector.z = v.position.z;
 			vertex.Position = vector;
-			vector.x = v.normal().x();
-			vector.y = v.normal().y();
-			vector.z = v.normal().z();
+			vector.x = v.normal.x;
+			vector.y = v.normal.y;
+			vector.z = v.normal.z;
 			vertex.Normal = vector;
 			// texture coordinates
-			if (v.has_texcoord()) // does the mesh contain texture coordinates?
-			{
-				glm::vec2 vec;
-				// a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
-				// use models where a vertex can have multiple texture coordinates so we always take the first set (0).
-				vec.x = v.texcoord().x();
-				vec.y = v.texcoord().y();
-				vertex.TexCoords = vec;
-			}
-			else
-				vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+			glm::vec2 vec;
+			// a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
+			// use models where a vertex can have multiple texture coordinates so we always take the first set (0).
+			vec.x = v.texcoord.x;
+			vec.y = v.texcoord.y;
+			vertex.TexCoords = vec;
 
 			vertices.push_back(vertex);
 		}
-		for(int i = 0; i < m.indices_size();i++)
+		for(const auto& i : m.indices)
 		{
-			const auto& v = m.indices(i);
-			indices.emplace_back(v);
+			indices.emplace_back(i);
 		}
-		for(int i = 0;i<m.texture_keys_size();i++)
+		for(const auto& tk : m.texture_keys)
 		{
-			const auto& v = m.texture_keys(i);
-			needed_texture.emplace_back(v);
+			needed_texture.emplace_back(tk);
 		}
 	}
 
@@ -100,7 +101,7 @@ public:
 		textures = text;
 	}
 
-	void Allocate()
+	void Allocate(int program = 0)
 	{
 		glGenVertexArrays(1, &VAO);
 		glGenBuffers(1, &VBO);
@@ -113,7 +114,8 @@ public:
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint), &indices[0], GL_STATIC_DRAW);
-		
+	
+
 		// vertex position
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
@@ -139,16 +141,16 @@ public:
 		static const std::string name = "texture_diffuse";
 		for(uint i = 0; i < textures.size();i++)
 		{
-			glActiveTexture(GL_TEXTURE0 + i);
-			string n = name + std::to_string(i);
-			glUniform1i(glGetUniformLocation(shader, n.c_str()), i);
-			glBindTexture(GL_TEXTURE_2D, textures[i]);
+			//glActiveTexture(GL_TEXTURE0 + i);
+			//string n = name + std::to_string(i);
+			//glUniform1i(glGetUniformLocation(shader, n.c_str()), i);
+			//glBindTexture(GL_TEXTURE_2D, textures[i]);
 		}
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
-
-		glActiveTexture(GL_TEXTURE0);
+		printf("DRAWING SOME %d\n",indices.size());
+		//glActiveTexture(GL_TEXTURE0);
 	}
 
 
@@ -156,28 +158,25 @@ public:
 	{
 		for(const auto& v : vertices)
 		{
-			auto* dv = m->add_vertices();
-			auto* pos = dv->mutable_position();
-			pos->set_x(v.Position.x);
-			pos->set_y(v.Position.y);
-			pos->set_z(v.Position.z);
-			auto*n = dv->mutable_normal();
-			n->set_x(v.Normal.x);
-			n->set_y(v.Normal.y);
-			n->set_z(v.Normal.z);
-			auto*tc = dv->mutable_texcoord();
-			tc->set_x(v.TexCoords.x);
-			tc->set_y(v.TexCoords.y);
+			Vertex ver;
+			ver.Position.x = v.Position.x;
+			ver.Position.y = v.Position.y;
+			ver.Position.z = v.Position.z;
+			ver.Normal.x = v.Normal.x;
+			ver.Normal.y = v.Normal.y;
+			ver.Normal.z = v.Normal.z;
+			ver.TexCoords.x = v.TexCoords.x;
+			ver.TexCoords.y = v.TexCoords.y;
 		}
 
 		for(const auto& i : indices)
 		{
-			m->add_indices(i);
+			m->indices.emplace_back(i);
 		}
 
 		for(const auto& t : needed_texture)
 		{
-			m->add_texture_keys(t);
+			m->texture_keys.emplace_back(t);
 		}
 	}
 
@@ -186,12 +185,12 @@ public:
 class YaseModel
 {
 public:
-	string					name;
+	string					name = "";
 	bool					has_been_update = false;
 
 	std::vector<YaseMesh>	meshes;
 
-	fs::path				directory;
+	fs::path				directory = "";
 
 	const vector<YaseMesh>& getMeshes() { return meshes; }
 	bool hasBeenUpdate() { return has_been_update; }
@@ -210,19 +209,20 @@ public:
 	{
 		for(const auto& mesh : meshes)
 		{
-			auto* m = model->add_meshes();
-			mesh.toDefMesh(m);
+			YASE::DEF::Mesh m;
+			mesh.toDefMesh(&m);
+			model->meshes.emplace_back(m);
+			model->name = name;
 		}
 	}
 
 	void LoadFromDefModel(YASE::DEF::Model& model)
 	{
-		name = model.name();
-		for (int i = 0; i < model.meshes_size(); i++)
+		name = model.name;
+		for (const auto& mesh : model.meshes)
 		{
-			const auto& m = model.meshes(i);
-			YaseMesh ym(m);
-			meshes.emplace_back(m);
+			YaseMesh ym(mesh);
+			meshes.emplace_back(ym);
 		}
 
 	}
@@ -233,10 +233,7 @@ public:
 		ifstream inf(fullpath.string(), ios::binary | std::ios::in);
 		if (!inf.is_open())
 			return false;
-		YASE::DEF::Model model;
-		if (!model.ParseFromIstream(&inf))
-			return false;
-		LoadFromDefModel(model);
+
 		return true;
 	}
 
@@ -305,6 +302,7 @@ public:
 			}
 			else
 				vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+
 			// tangent
 			/*vector.x = mesh->mTangents[i].x;
 			vector.y = mesh->mTangents[i].y;
@@ -329,9 +327,9 @@ public:
 		// process materials
 		//for (uint i = 0; i < scene->mNumMaterials; i++)
 		//{
-			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-			std::vector<string> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse",tm);
-			textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+			//aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+			//std::vector<string> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse",tm);
+			//textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 		//}
 
 		return YaseMesh(vertices, indices,textures);
@@ -373,13 +371,36 @@ public:
 		{
 			tid = tm->loadTexture(m.needed_texture);
 			m.setTextures(tid);
-			m.Allocate();
+			m.Allocate(0);
 			tid.clear();
 		}
 	}
 	
 };
+inline static YaseModel* getDefaultModel()
+{
+	YaseModel* vv = new YaseModel();
+	YASE::DEF::Mesh mesh;
+	for (int i = 0; i < 4; i++)
+	{
+		YASE::DEF::Vertex vert;
+		vert.position.x = vertex_base[i].x;
+		vert.position.y = vertex_base[i].y;
+		vert.position.z = vertex_base[i].z;
 
+		vert.texcoord.x = tex_bas[i].x;
+		vert.texcoord.y = tex_bas[i].y;
+
+		mesh.vertices.emplace_back(vert);
+	}
+	for (int i = 0; i < 6; i++)
+	{
+		mesh.indices.emplace_back(indice_base[i]);
+	}
+	YaseMesh m(mesh);
+	vv->meshes.emplace_back(m);
+	return vv;
+}
 struct ModelException : public std::exception {
 
 	bool exists;
@@ -415,7 +436,7 @@ class ModelManager : public AssetManager
 
 
 public:
-	TextureManager*					tex_manager;
+	TextureManager*					tex_manager = nullptr;
 	vector<const char*> getKeys()
 	{
 		vector<const char*> v;
@@ -424,27 +445,11 @@ public:
 		return v;
 	}
 	virtual void saveManager(ostream* writer) {
-		YASE::DEF::ModelList ml;
-		for (const auto& m : map_model) {
-			// TODO : Regarde si un model a ete update si oui on ecrase l'ancien fichier
-			auto* model = m.second;
-			ml.add_models(m.first);
-		}
-		if (!ml.SerializeToOstream(writer)) {
 
-		}
 	}
 
 	virtual void loadManager(ifstream* reader) {
-		YASE::DEF::ModelList ml;
-		if (!ml.ParseFromIstream(reader))
-		{
-			
-		}
-		for (int i = 0; i < ml.models_size(); i++)
-		{
-			map_model[ml.models(i)] = nullptr;
-		}
+
 		ValidIntegrity();
 	}
 
@@ -501,11 +506,7 @@ public:
 		}
 		YASE::DEF::Model* md = new YASE::DEF::Model();
 		m->toDefModel(md);
-		if(!md->SerializeToOstream(&of))
-		{
-			YASE_LOG_ERROR("Echec de la seraialisation de YASE::DEF::Model");
-		}
-		of.close();
+
 		delete md;
 	}
 
@@ -523,12 +524,11 @@ public:
 			YASE_LOG_ERROR(("Impossible d'oubrir le fichier " + fp.string()).c_str());
 			return;
 		}
-		if (!model.SerializePartialToOstream(&of)) {
-			YASE_LOG_ERROR("Echec de la seraialisation de YASE::DEF::Model");
-			return;
-		}
+
 		of.close();
-		map_model[name] = nullptr;
+	
+		map_model[name] = getDefaultModel();
+		map_model[name]->LoadModel(tex_manager);
 		// devrait essayer de le loader tout suite quand on l'ajoute
 	}
 
