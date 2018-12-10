@@ -1,6 +1,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include <yas/serialize.hpp>
 
 namespace YASE::DEF
 {
@@ -16,12 +17,26 @@ namespace YASE::DEF
 		int			width;
 		int			height;
 		int			channels;
+
+		Texture() : name(), category(), width(), height(), channels() {}
+		Texture(string n,string cat,int w, int h, int c) : name(n), category(cat), width(w), height(h), channels(c) {}
+
+		template<typename Ar>
+		void serialize(Ar &ar) {
+			ar & YAS_OBJECT(nullptr, name, category, width, height, channels);
+		}
 	};
 
 	struct TextureOption
 	{
 		TexWrappingOptions	wrapping;
 		TexFilterOptions	filter;
+
+
+		template<typename Ar>
+		void serialize(Ar &ar) {
+			ar & YAS_OBJECT(nullptr, wrapping, filter);
+		}
 	};
 
 
@@ -31,6 +46,14 @@ namespace YASE::DEF
 		string		ext;
 
 		int			total_size;
+
+		SkyBox() : name(), ext(), total_size() {}
+		SkyBox(string n,string e,int ts) : name(n), ext(e),total_size(ts) {}
+
+		template<typename Ar>
+		void serialize(Ar& ar) {
+			ar & YAS_OBJECT(nullptr, name, ext, total_size);
+		}
 	};
 
 
@@ -64,23 +87,44 @@ namespace YASE::DEF
 		float x;
 		float y;
 		float z;
+
+		Vec3f() : x(), y(), z() {}
+		Vec3f(float x1, float y1, float z1) : x(x1), y(y1), z(z1) {
+			
+		}
+
+		template<typename Ar>
+		void serialize(Ar& ar) {
+			ar & YAS_OBJECT(nullptr, x, y, z);
+		}
 	};
 
 	struct Vec2f
 	{
 		float x;
 		float y;
+
+		template<typename Ar>
+		void serialize(Ar& ar) {
+			ar & YAS_OBJECT(nullptr, x, y);
+		}
 	};
 
 	struct Vertex
 	{
 
-		Vec3f	position;
-		Vec3f	normal;
-		Vec2f	texcoord;
+		Vec3f	Position;
+		Vec3f	Normal;
+		Vec2f	TexCoords;
 
-		Vec3f	tangeant;
-		Vec3f	bitangeant;
+		Vec3f	Tangent;
+		Vec3f	Bitangent;
+
+		template<typename Ar>
+		void serialize(Ar& ar) {
+			ar & YAS_OBJECT(nullptr, Position, Normal, TexCoords, Tangent, Bitangent);
+
+		}
 
 	};
 
@@ -156,6 +200,18 @@ namespace YASE::DEF
 		string		active_scene;
 
 		vector<Scene> scenes;
+
+		Environment() : name(), root(), active_scene(), scenes() {
+
+		}
+		Environment(string n, string r, string as, vector<Scene> s) : name(n), root(r), active_scene(as), scenes(s) {
+
+		}
+
+		template<typename Ar>
+		void serialize(Ar& ar) {
+			ar & YAS_OBJECT(nullptr, name, root, active_scene);
+		}
 	};
 
 }

@@ -25,6 +25,9 @@ set(ASSIMP_LIBRARY "" CACHE PATH "The directory that contains assimp.lib" )
 
 set(YAS_INCLUDE_PATH "" CACHE PATH "The directory that contains yas/serialize.hpp")
 
+#set(SDL2_IMAGE_INCLUDE_PATH "" CACHE PATH "SDL2_image")
+#set(SDL2_IMAGE_LIBRARY_PATH "" CACHE PATH "SDL2_image lib")
+
 
 if(UNIX)
 	set( GL_LIBS GL GLEW glfw c++fs assimp soil ${PROTOBUF_LIBRARY})

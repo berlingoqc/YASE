@@ -10,6 +10,7 @@
 #include "textures.h"
 #include "logger.h"
 
+#include "base_manager.h"
 #include "texture_manager.h"
 #include "shader_manager.h"
 #include "model_manager.h"
@@ -23,10 +24,12 @@ using namespace std;
 using namespace ENGINE;
 
 
+	
 	class EnvManager
 	{
 		inline static string folders[6] { "texture", "skybox", "model","shader", "sound", "scene"};
 		inline static string env_file_name = "env.yase";
+
 
 		fs::path			root_folder;
 		string				name;
@@ -40,7 +43,6 @@ using namespace ENGINE;
 		SceneManager		scene_manager;
 
 
-
 		void initFolderManager() {
 			texture_manager.setRootFolder(root_folder / folders[0]);
 			skybox_manager.setRootFolder(root_folder / folders[1]);
@@ -50,7 +52,9 @@ using namespace ENGINE;
 			scene_manager.setRootFolder(root_folder / folders[5]);
 		}
 
+
 	public:
+
 		fs::path getRootFolder() {
 			return root_folder;
 		}
@@ -108,62 +112,54 @@ using namespace ENGINE;
 
 			initFolderManager();
 
+
 			scene_manager.skybox_manager = &skybox_manager;
 			scene_manager.model_manager = &model_manager;
 			scene_manager.tex_manager = &texture_manager;
 
 			model_manager.tex_manager = &texture_manager;
-
-			texture_manager.Save();
-			skybox_manager.Save();
-			model_manager.Save();
-			shader_manager.Save();
-			sound_manager.Save();
-			scene_manager.Save();
 
 			return save();
 		}
 
 		bool save()
 		{
+			fs::path p = root_folder / env_file_name;
+			YASE::DEF::Environment env;
+			auto* scene = scene_manager.getActiveScene();
+			if (scene != nullptr) {
+				env.active_scene = scene->name;
+			}
+			env.name = name;
+			env.root = root_folder.string();
 
-			skybox_manager.Save();
-			texture_manager.Save();
-			shader_manager.Save();
-			model_manager.Save();
-			sound_manager.Save();
-			scene_manager.Save();
+			yas::file_ostream of(p.string().c_str(), yas::file_trunc);
+			yas::save<flags_yas_bf>(of,env,skybox_manager,texture_manager,scene_manager,model_manager);
+			of.flush();
+
 
 			return true;
 		}
 
 		bool load(fs::path filepath) {
-			ifstream inf;
-			inf.open(filepath, ios::binary | std::ios::in);
-			if (!inf.is_open())
-				return false;
+			yas::file_istream ifs(filepath.string().c_str());
 			YASE::DEF::Environment env;
-
-
-			inf.close();
-
+			yas::load<flags_yas_bf>(ifs, env, skybox_manager,texture_manager,scene_manager,model_manager);
 			this->name = env.name;
-			this->root_folder = filepath.parent_path();
+			this->root_folder = env.root;
+			if (!env.active_scene.empty()) {
+				// reload la scene active
+			}
+			model_manager.generateMap();
 
 			initFolderManager();
-
-			texture_manager.Load();
-			skybox_manager.Load();
-			shader_manager.Load();
-			model_manager.Load();
-			sound_manager.Load();
-			scene_manager.Load();
 
 			scene_manager.skybox_manager = &skybox_manager;
 			scene_manager.model_manager = &model_manager;
 			scene_manager.tex_manager = &texture_manager;
 
 			model_manager.tex_manager = &texture_manager;
+			
 
 			return true;
 		}

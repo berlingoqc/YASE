@@ -21,19 +21,24 @@ struct YaseTextureInfo {
 	YASE::DEF::Texture			texture; // Contient l'informations de la texture
 	YASE::DEF::TextureOption	option; // Contient les informations de chargement de la texture
 	uint						gl_id = ERROR_TEXTURE; // Contient l'id opengl de la texture si elle a ete loader
+
+	template<typename Ar>
+	void serialize(Ar& ar) {
+		ar & YAS_OBJECT(nullptr, texture, option);
+	}
 };
 
 // TextureManager s'occupe de gerrer nos textures et de loader
 // ceux qu'on veut utiliser quand le temps est venu
 class TextureManager : public AssetManager {
+public:
 	ENGINE::MyTexture					texture_loader; // Classe pour charger les textures
 	std::vector<YASE::DEF::Texture>		textures; // Liste de nos textures dans notre repertoire
 	std::vector<std::string>			categories; // Liste des catégories de texture ??
-	map<string, YaseTextureInfo*>		loaded_textures; // Contient les informations sur des textures avec les info de loading utiliser par un context donner
+	map<string, YaseTextureInfo>		loaded_textures; // Contient les informations sur des textures avec les info de loading utiliser par un context donner
 
-	int nbr_loaded_gl;
+	int nbr_loaded_gl = 0;
 
-public:
 	virtual void saveManager(ostream* writer) {
 
 	}
@@ -45,7 +50,7 @@ public:
 	template<typename Ar>
 	void serialize(Ar& ar)
 	{
-		//ar & YASE_OBJECT(nullptr,textures);
+		ar & YAS_OBJECT(nullptr,textures,categories,loaded_textures);
 	}
 
 	TextureManager() :
@@ -60,7 +65,7 @@ public:
 	}
 
 	// Retourne la map des textures qui ont besoin d'etre loader ( avec leur settings )
-	const map<string, YaseTextureInfo*>& getLoadedtextures() {
+	const map<string, YaseTextureInfo>& getLoadedtextures() {
 		return loaded_textures;
 	}
 
@@ -68,7 +73,7 @@ public:
 	// Retourne les informations d'une texture loader ( dependence d'un model )
 	YaseTextureInfo* getLoadedTextures(string name) {
 		if (const auto& i = loaded_textures.find(name); i != loaded_textures.end()) {
-			return i->second;
+			return &i->second;
 		}
 		return nullptr;
 	}
@@ -132,23 +137,22 @@ public:
 
 	void AddNewLoadedTexture(string name, string tex_name, YASE::DEF::TexWrappingOptions w, YASE::DEF::TexFilterOptions f) {
 		// valide que la cle n'existe pas deja
-		YaseTextureInfo* yti = new YaseTextureInfo();
+		YaseTextureInfo yti;
 		for(const auto& i : textures)
 		{
 			if(i.name == tex_name)
 			{
-				yti->texture = i;
+				yti.texture = i;
 				break;
 			}
 		}
-		if(yti->texture.name.empty())
+		if(yti.texture.name.empty())
 		{
 			// throw not found
-			delete yti;
 			return;
 		}
-		yti->option.filter = f;
-		yti->option.wrapping = w;
+		yti.option.filter = f;
+		yti.option.wrapping = w;
 		loaded_textures[name] = yti;
 	}
 

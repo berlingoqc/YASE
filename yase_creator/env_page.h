@@ -195,7 +195,7 @@ public:
 				{
 					for(const auto& t : tex_man->getLoadedtextures())
 					{
-						ImGui::Text("KEY : %s GLID : %d", t.first.c_str(), t.second->gl_id);
+						ImGui::Text("KEY : %s GLID : %d", t.first.c_str(), t.second.gl_id);
 					}
 					ImGui::TreePop();
 				}
@@ -306,6 +306,8 @@ public:
 							current_scene = loader->getSceneManager()->loadScene(scene_items[scene_item_current]);
 							auto& io = ImGui::GetIO();
 							current_scene->setSceneSize(io.DisplaySize.x, io.DisplaySize.y);
+							current_scene->work_camera.fuckme();
+							current_scene->generateMap();
 							camera_settings_window.camera = &current_scene->work_camera;
 						}
 						
@@ -335,12 +337,10 @@ public:
 							if(b)
 							{
 								current_scene = loader->getSceneManager()->getActiveScene();
+								current_scene->work_camera.fuckme();
+								current_scene->generateMap();
 								camera_settings_window.camera = &current_scene->work_camera;
 
-								//loader->getSkyBoxManager()->AddSkyBox("lol", "model/bbb");
-								loader->getModelManager()->AddModel("lol", {});
-								current_scene->addEnvironmentModel("totem_1", "lol.model");
-								//current_scene->setActiveSkybox("lol");
 							}
 						}
 

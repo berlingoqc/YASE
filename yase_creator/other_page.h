@@ -35,7 +35,7 @@ struct CameraSettings
 					camera->setCameraSpeed({ speed[0],speed[1],speed[2] });
 				}
 
-				if (ImGui::DragFloat("FOV", &fov, 1, 5, 180))
+				if (ImGui::DragFloat("FOV", &camera->fov, 1, 5, 180))
 				{
 					camera->setFOV(fov);
 				}

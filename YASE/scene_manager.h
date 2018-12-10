@@ -6,7 +6,7 @@
 #include "camera.h"
 #include <glm/vec3.hpp>
 #include "shaders.h"
-
+#include "model.h"
 
 class SkyBoxGenerator
 	{
@@ -98,23 +98,30 @@ class SkyBoxGenerator
 
 struct MatriceModel
 {
-	glm::vec3	translation = glm::vec3(1,1,1);
-	glm::vec3	scale = glm::vec3(1,1,1);
-	glm::vec3	rotation = glm::vec3(0,0,0);
-	float		angle_rotation = 0.0f;
+	YASE::DEF::Vec3f	translation = YASE::DEF::Vec3f(1.0f,1.0f,1.0f);
+	YASE::DEF::Vec3f	scale = YASE::DEF::Vec3f(1.0f,1.0f,1.0f);
+	YASE::DEF::Vec3f	rotation = YASE::DEF::Vec3f(1.0f,1.0f,1.0f);
+	float				angle_rotation = 0.0f;
 
 
-	void save(YASE::DEF::MatriceModel* mm)
-	{
-	
-		
-		
+	void updateModel(glm::mat4& mat_model,bool newmodel = true) {
+		// Calcul ca matrice model
+		if(newmodel)
+			mat_model = glm::mat4(1.0f);
+		const auto t = glm::vec3(translation.x, translation.y, translation.z);
+		const auto s = glm::vec3(scale.x, scale.y, scale.z);
+		const auto r = glm::vec3(rotation.x, rotation.y, rotation.z);
+		mat_model = glm::translate(mat_model, t); // translate it down so it's at the center of the scene
+		if (angle_rotation != 0)
+			mat_model = glm::rotate(mat_model, glm::radians(angle_rotation), r);
+		mat_model = glm::scale(mat_model, s);	// it's a bit too big for our scene, so scale it down
 	}
 
-	void load(const YASE::DEF::MatriceModel& mm)
-	{
-		
+	template<typename Ar>
+	void serialize(Ar& ar) {
+		ar & YAS_OBJECT(nullptr, translation, scale, rotation, angle_rotation);
 	}
+
 };
 
 struct KeyFrame
@@ -143,27 +150,9 @@ struct StaticModel
 
 	YaseModel*	model = nullptr;
 
-	void save(YASE::DEF::InitialModel* im)
-	{
-		//im->set_model_key(model_key);
-		//auto* mt = im->mutable_transformation();
-		//transformation.save(mt);
-	}
-
-	void load(const YASE::DEF::InitialModel& im)
-	{
-		//model_key = im.model_key();
-		//transformation.load(im.transformation());
-	}
-
 	void updateModel()
 	{
-		// Calcul ca matrice model
-		mat_model = glm::mat4(1.0f);
-		mat_model = glm::translate(mat_model, transformation.translation); // translate it down so it's at the center of the scene
-		if(transformation.angle_rotation != 0)
-			mat_model = glm::rotate(mat_model, glm::radians(transformation.angle_rotation), transformation.rotation);
-		mat_model = glm::scale(mat_model, transformation.scale);	// it's a bit too big for our scene, so scale it down
+		transformation.updateModel(mat_model);
 	}
 
 	void loadStaticModel(ModelManager* mm)
@@ -175,6 +164,12 @@ struct StaticModel
 			YASE_LOG_ERROR(("Impossible de charger le model " + model_key).c_str());
 		}
 		updateModel();
+	}
+
+
+	template<typename Ar>
+	void serialize(Ar& ar) {
+		ar & YAS_OBJECT(nullptr, model_key, transformation);
 	}
 };
 
@@ -197,7 +192,7 @@ public:
 	string							active_skybox;
 
 	FPSCamera						work_camera;
-	map<string,FPSCamera>			scene_cameas;
+	map<string,FPSCamera>			scene_cameras;
 
 	ENGINE::Shrapper				shader_texture;
 	ENGINE::Shrapper				shader_skybox;
@@ -211,7 +206,23 @@ public:
 
 	map<string, StaticModel*>		env_model_map; // Contient les models static qui compose l'environnement de la scene
 
+	vector<StaticModel>				env_model;
+
 public:
+
+	template<typename Ar>
+	void serialize(Ar& ar) {
+		ar & YAS_OBJECT(nullptr, name, needed_model, active_skybox, work_camera, scene_cameras, near_plane, rear_plane, env_model);
+	}
+
+	void generateMap() {
+		for (auto& i : env_model) {
+			env_model_map[i.model_key] = &i;
+			i.loadStaticModel(model_manager);
+		}
+	}
+
+
 	BaseScene()
 	{
 		ENGINE::MyShader shader;
@@ -291,46 +302,14 @@ public:
 		}
 		if (const auto& p = env_model_map.find(name); p != env_model_map.end() || name.empty())
 			return;
-		StaticModel* smodel = new StaticModel();
-		smodel->model_key = model_key;
-		smodel->loadStaticModel(model_manager);
-		env_model_map[name] = smodel;
+		StaticModel smodel;
+		env_model.emplace_back(smodel);
+		env_model_map[name] = &env_model[env_model.size() - 1];
+		env_model_map[name]->model_key = model_key;
+		env_model_map[name]->loadStaticModel(model_manager);
 	}
 
-	void save(YASE::DEF::Scene* scene)
-	{
-		//scene->set_name(name);
-		//scene->set_skybox_name(active_skybox);
-		//auto* work_cam = scene->mutable_work_camera();
-		//work_camera.save(work_cam);
 
-		// Sauvegarde nos models statique de l'environment
-		//for(const auto& i : env_model_map)
-		//{
-		//	YASE::DEF::InitialModel* im = scene->add_initial_models();
-		//	im->set_name(i.first);
-		//	i.second->save(im);
-		//}
-		
-	}
-
-	void load(const YASE::DEF::Scene& scene)
-	{
-		//name = scene.name();
-		//active_skybox = scene.skybox_name();
-		//const auto& wc = scene.work_camera();
-		//work_camera.load(wc);
-
-		// Load nos models statique de l'environment
-		//for(int i = 0;i<scene.initial_models_size();i++)
-		//{
-		//	const auto& im = scene.initial_models(i);
-		//	StaticModel* sm = new StaticModel();
-		//	sm->load(im);
-		//	env_model_map[im.name()] = sm;
-		//}
-
-	}
 
 	void loadGL()
 	{
@@ -370,7 +349,6 @@ public:
 			if(m.second->model != nullptr)
 			{
 				shader_texture.setMat4("gModele", m.second->mat_model);
-				m.second->model->meshes[0].Allocate(shader_texture.getID());
 				m.second->model->Draw(shader_texture.getID());
 			}
 			
@@ -394,6 +372,11 @@ public:
 	TextureManager*					tex_manager = nullptr;
 	SkyBoxManager*					skybox_manager = nullptr;
 	ModelManager*					model_manager = nullptr;
+
+	template<typename Ar>
+	void serialize(Ar& ar) {
+		ar & YAS_OBJECT(nullptr, scene, active_scene_name);
+	}
 
 	vector<const char*> getKeys()
 	{

@@ -91,7 +91,7 @@ public:
 
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
-		glEnable(GL_BLEND);
+		glDisable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 #ifndef EMSCRIPTEN
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -168,7 +168,12 @@ YASECreator c;
 
 void run_main()
 {
-	c.mainLoop();
+	try {
+		c.mainLoop();
+	}
+	catch (std::exception& e) {
+		printf("EX: %s\n", e.what());
+	}
 }
 
 void run_main_loop()
@@ -183,12 +188,31 @@ void run_main_loop()
 
 int main()
 {
+/*
+	constexpr size_t flags = yas::file | yas::binary;
+	//ofstream of("env.yase", ios::in | ios::binary);
+	yas::file_ostream os("env.yase", ios::in | ios::binary);
+	YASE::DEF::Texture t{ "lol.png", "default", 1080, 720, 3 };
+	yas::save<flags>(os,t);
+	os.flush();
+
+	if (!fs::exists("env.yase")) {
+		printf("Faillll\n");
+	}
+
+	yas::file_istream ifs("env.yase");
+	YASE::DEF::Texture t2;
+	yas::load<flags>(ifs, t2);
+*/	
+
+
+
+
 
 	c.init();
 #ifdef EMSCRIPTEN
 	emscripten_set_main_loop(run_main, 0,1);
 #else
-	c.init();
 	run_main_loop();
 	c.shutdown();
 #endif

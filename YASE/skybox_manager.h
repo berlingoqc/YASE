@@ -17,6 +17,16 @@ class SkyBoxManager : public AssetManager
 	
 public:
 
+
+	template<typename Ar>
+	void serialize(Ar& ar) {
+		for (auto& b : boxes) {
+			std::get<1>(b.second) = ERROR_TEXTURE;
+		}
+		ar & YAS_OBJECT(nullptr, boxes);
+	}
+
+
 	vector<const char*> getKeys()
 	{
 		vector<const char*> v;

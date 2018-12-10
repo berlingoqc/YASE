@@ -10,7 +10,9 @@
 #include "model.h"
 #include <yas/serialize.hpp>
 #include <yas/std_types.hpp>
+#include <yas/file_streams.hpp>
 
+constexpr  size_t flags_yas_bf = yas::file | yas::binary;
 struct FileDontExist : public std::exception {
 
 	string	file;

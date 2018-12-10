@@ -3,6 +3,7 @@
 
 #include "header.h"
 #include "model.h"
+
 enum DIRECTION_CAM
 {
 	DIR_LEFT, DIR_RIGHT, DIR_FORWARD, DIR_BACKWARD
@@ -10,9 +11,11 @@ enum DIRECTION_CAM
 
 class FPSCamera
 {
+
+public:
 	string name = "default";
 
-	glm::vec3 camera_pos = glm::vec3(0.0f, 0.5f, 7.0f);
+	glm::vec3 camera_pos =  glm::vec3(0.0f, 0.5f, 7.0f);
 	glm::vec3 camera_front = glm::vec3(0.0f, 0.25f, -1.0f);
 	glm::vec3 camera_up = glm::vec3(0.0f, 5.0f, 0.0f);
 
@@ -28,9 +31,12 @@ class FPSCamera
 
 	bool	move_y = false;
 
-	glm::vec3	camera_speed = { 0.8f,2.0f,0.8f };
+	glm::vec3 camera_speed = { 0.8f,2.0f,0.8f };
 
-
+	YASE::DEF::Vec3f p = {0.0f,0.5f, 7.0f};
+	YASE::DEF::Vec3f f = {0.0f,0.25f,-1.0f};
+	YASE::DEF::Vec3f s = {0.8f,2.0f,0.8f};
+	YASE::DEF::Vec3f h = {0.0f,5.0f,0.0f};
 
 	glm::vec3 getCamForward() const {
 		glm::vec3 camDevant;
@@ -43,23 +49,38 @@ class FPSCamera
 		return camDevant;
 	}
 
-public:
 	FPSCamera()
 	{
 		
 	}
+
+	void fuckme() {
+		camera_pos.x = p.x; camera_pos.y = p.y; camera_pos.z = p.z;
+		camera_front.x = f.x; camera_front.y = f.y; camera_front.z = f.z;
+		camera_up.x = h.x; camera_up.y = h.y; camera_up.z = h.z;
+		camera_speed.x = s.x; camera_speed.y = s.y; camera_speed.z = s.z;
+	}
+
+	template<typename Ar>
+	void serialize(Ar& ar) {
+		p.x = camera_pos.x; p.y = camera_pos.y; p.z = camera_pos.z;
+		f.x = camera_front.x; f.y = camera_front.y; f.z = camera_front.z;
+		s.x = camera_speed.x; s.y = camera_speed.y; s.z = camera_speed.z;
+		h.x = camera_up.x; h.y = camera_up.y; h.z = camera_up.z;
+		ar & YAS_OBJECT(nullptr, p, f, h, yaw, pitch, fov, s);
+	}
 	string getName() { return name; }
 	void setName(string s) { name = s; }
-	const glm::vec3& getCameraPosition() { return camera_pos; }
-	const glm::vec3& getCameraFront() { return camera_front; }
-	const glm::vec3& getCameraUp() { return camera_up; }
-	const glm::vec3& getCameraSpeed() { return camera_speed; }
+	const glm::vec3& getCameraPosition() const { return camera_pos; }
+	const glm::vec3& getCameraFront() const { return camera_front; }
+	const glm::vec3& getCameraUp() const { return camera_up; }
+	const glm::vec3& getCameraSpeed() const { return camera_speed; }
 	void setCameraSpeed(glm::vec3 speed) {
 		camera_speed = speed;
 	}
+
 	float getYaw() { return yaw; }
 	float getPitch() { return pitch; }
-
 	glm::mat4 getLookAt() const
 	{
 		return glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
@@ -87,7 +108,7 @@ public:
 	void down()
 	{
 		camera_pos.y -= camera_speed.y;
-		
+
 	}
 
 	void forward()
@@ -115,7 +136,7 @@ public:
 
 		GLfloat xoffset = x - last_x;
 		GLfloat yoffset = last_y - y;
-		last_x = x;	
+		last_x = x;
 		last_y = y;
 
 		GLfloat sensitivity = 0.3;
@@ -134,7 +155,6 @@ public:
 		front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 		camera_front = glm::normalize(front);
 	}
-
 	void addFOV(float v)
 	{
 		fov += v;
@@ -150,38 +170,7 @@ public:
 		return fov;
 	}
 
-	void save(YASE::DEF::CameraPosition* cp)
-	{
-		cp->position.x  = camera_pos.x;
-		cp->position.y = camera_pos.y;
-		cp->position.z = camera_pos.z;
-		cp->front.x = camera_front.x;
-		cp->front.y = camera_front.y;
-		cp->front.z = camera_front.z;
-		cp->name = name;
-		cp->pitch = pitch;
-		cp->yaw = yaw;
-		cp->fov = fov;
-		cp->speed.x=camera_speed.x;
-		cp->speed.y=camera_speed.y;
-		cp->speed.z=camera_speed.z;
-	}
 
-	void load(const YASE::DEF::CameraPosition& cp)
-	{
-		camera_pos.x = cp.position.x;
-		camera_pos.y = cp.position.y;
-		camera_pos.z = cp.position.z;
-		camera_front.x = cp.front.x;
-		camera_front.y = cp.front.y;
-		camera_front.z = cp.front.z;
-		pitch = cp.pitch;
-		name = cp.name;
-		fov = cp.fov;
-		camera_speed.x = cp.speed.x;
-		camera_speed.y = cp.speed.y;
-		camera_speed.z = cp.speed.z;
-	}
 };
 
 
