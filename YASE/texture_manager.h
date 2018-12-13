@@ -109,10 +109,15 @@ public:
 	}
 
 	void getTexGLID(YaseTextureInfo* t) {
-		fs::path p = root_folder;
-		p = p / t->texture.name;
-		// Configure selon les parametre le texture loader
-		t->gl_id = texture_loader.GetTexture(p.string());
+		if(t->texture.size_data != 0) {
+			t->gl_id = texture_loader.GetTexture(t->texture.data);
+		}
+		else {
+			fs::path p = root_folder;
+			p = p / t->texture.name;
+			// Configure selon les parametre le texture loader
+			t->gl_id = texture_loader.GetTexture(p.string());
+		}
 		if (t->gl_id != ERROR_TEXTURE)
 			nbr_loaded_gl++;
 	}
@@ -133,8 +138,6 @@ public:
 	YaseTextureInfo* loadTexture(string key) {
 
 	}
-
-
 	void AddNewLoadedTexture(string name, string tex_name, YASE::DEF::TexWrappingOptions w, YASE::DEF::TexFilterOptions f) {
 		// valide que la cle n'existe pas deja
 		YaseTextureInfo yti;
@@ -157,6 +160,31 @@ public:
 	}
 
 
+	bool AddNewTexture(string filename,char* data, int size,string category = "default") {
+		printf("Ajout nouvelle texture deja loader %d \n", size);
+		YASE::DEF::Texture t;
+		t.name = filename;
+		t.size_data = size;
+
+		t.data = texture_loader.GetContent((unsigned char*)data,size);
+		printf("Get Content is done\n");
+		uint v = texture_loader.GetTexture(t.data);
+		if (v == ERROR_TEXTURE) {
+			// Devrait tu supprimer le fichier ? oui
+			printf("Echer generer %s\n", filename.c_str());
+			return false;
+		}
+		printf("Prout\n");
+		ENGINE::TextureFileInfo fi = texture_loader.getLastTextureInfo();
+		t.category = category;
+		t.channels = fi.channel;
+		t.height = fi.height;
+		t.width = fi.width;
+		textures.emplace_back(t);
+		printf("End add texture\n");
+		glDeleteTextures(1, &v);
+		return true;
+	}
 	// AddNewTexture ajoute une nouvelle texture dans
 	// la liste et cree son information
 	bool AddNewTexture(fs::path filepath, string category = "default") {

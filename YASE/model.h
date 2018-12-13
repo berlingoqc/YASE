@@ -14,6 +14,9 @@ namespace YASE::DEF
 		string		name; // nom du fichier
 		string		category; // category de la texture
 
+		unsigned char*		data;
+		int			size_data;
+
 		int			width;
 		int			height;
 		int			channels;

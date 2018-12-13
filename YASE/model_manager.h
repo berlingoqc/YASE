@@ -286,6 +286,9 @@ public:
 		vector<uint> tid;
 		for(auto& m : meshes)
 		{
+			for (const auto& s : m.needed_texture) {
+				printf("%s\n", s.c_str());
+			}
 			tid = tm->loadTexture(m.needed_texture);
 			m.setTextures(tid);
 			m.Allocate();
@@ -416,6 +419,20 @@ public:
 		yas::file_ostream of(fp.string().c_str(), yas::file_trunc);
 		yas::save<flags_yas_bf>(of, *m);
 		of.flush();
+	}
+
+	void AddModel(string name, YaseModel ym) {
+		if (name.empty())
+		{
+			YASE_LOG_ERROR(("Aucune nom donner pour le model importer"));
+			return;
+		}		
+		YaseModel* m = new YaseModel();
+		*m = ym;
+		map_model[name] = m;
+		keys.emplace_back(name);
+		m->LoadModel(tex_manager);
+		index_loaded_model++;
 	}
 
 	// Ajout un yasemodel existant dans la collection. Le sauvegarde tout de suite. C'est la fonction qui s'occupe de ca

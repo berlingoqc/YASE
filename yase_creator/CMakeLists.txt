@@ -21,5 +21,5 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 	## --preload-file textures --preload-file shaders --preload-file fonts
 	add_definitions(-DEMSCRIPTEN)
 	set(CMAKE_EXECUTABLE_SUFFIX ".html")
-    set_target_properties(yase_creator PROPERTIES LINK_FLAGS "--emrun -s WASM=1 -std=c++11 -s DISABLE_EXCEPTION_CATCHING=0 -s ALLOW_MEMORY_GROWTH=1 -s USE_WEBGL2=1 -s FULL_ES3=1 -s USE_GLFW=3 --use-preload-plugins --preload-file default_shaders --preload-file model")
+    set_target_properties(yase_creator PROPERTIES LINK_FLAGS "--emrun   -s WASM=1 -std=c++11 -s DISABLE_EXCEPTION_CATCHING=0 -s ALLOW_MEMORY_GROWTH=1 -s USE_WEBGL2=1 -s FULL_ES3=1 -s USE_GLFW=3 -s FETCH=1 --preload-file default_shaders --preload-file model ")
 endif ()

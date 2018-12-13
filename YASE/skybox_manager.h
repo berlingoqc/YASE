@@ -72,6 +72,20 @@ public:
 	}
 
 
+	bool AddSkyBox(const std::string& name, vector<char*> faces,vector<int> sizes) {
+		YASE::DEF::SkyBox b;
+		b.name = name;
+		b.ext = ".png";
+		uint id = texture_loader.GetTextureSky(faces, sizes);
+		if (id == ERROR_TEXTURE) {
+			printf("Echer du chargement de %s\n", name.c_str());
+			return false;
+		}
+		boxes[name] = std::make_tuple(b, id);
+		return true;
+	}
+
+
 	bool AddSkyBox(const std::string& name, const fs::path& directory)
 	{
 		// Regarde que le nom est pas deja dans le map

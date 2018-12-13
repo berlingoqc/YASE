@@ -146,7 +146,7 @@ using namespace ENGINE;
 			YASE::DEF::Environment env;
 			yas::load<flags_yas_bf>(ifs, env, skybox_manager,texture_manager,scene_manager,model_manager);
 			this->name = env.name;
-			this->root_folder = env.root;
+			this->root_folder = filepath.parent_path();
 			if (!env.active_scene.empty()) {
 				// reload la scene active
 			}
