@@ -1,0 +1,2 @@
+/usr/bin/ar qc libyase.a  CMakeFiles/yase.dir/animation_manager.cpp.o CMakeFiles/yase.dir/base_manager.cpp.o CMakeFiles/yase.dir/camera.cpp.o CMakeFiles/yase.dir/env_manager.cpp.o CMakeFiles/yase.dir/model_manager.cpp.o CMakeFiles/yase.dir/scene_manager.cpp.o CMakeFiles/yase.dir/shader_manager.cpp.o CMakeFiles/yase.dir/skybox_manager.cpp.o CMakeFiles/yase.dir/sound_manager.cpp.o CMakeFiles/yase.dir/texture_manager.cpp.o
+/usr/bin/ranlib libyase.a

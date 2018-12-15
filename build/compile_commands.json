@@ -1,0 +1,107 @@
+[
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/imgui",
+  "command": "/usr/bin/clang++-7   -I/opt/yas/include  -g   -std=gnu++17 -o CMakeFiles/imgui.dir/imgui.cpp.o -c /home/wq/Téléchargements/YASE/imgui/imgui.cpp",
+  "file": "/home/wq/Téléchargements/YASE/imgui/imgui.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/imgui",
+  "command": "/usr/bin/clang++-7   -I/opt/yas/include  -g   -std=gnu++17 -o CMakeFiles/imgui.dir/imgui_demo.cpp.o -c /home/wq/Téléchargements/YASE/imgui/imgui_demo.cpp",
+  "file": "/home/wq/Téléchargements/YASE/imgui/imgui_demo.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/imgui",
+  "command": "/usr/bin/clang++-7   -I/opt/yas/include  -g   -std=gnu++17 -o CMakeFiles/imgui.dir/imgui_draw.cpp.o -c /home/wq/Téléchargements/YASE/imgui/imgui_draw.cpp",
+  "file": "/home/wq/Téléchargements/YASE/imgui/imgui_draw.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/imgui",
+  "command": "/usr/bin/clang++-7   -I/opt/yas/include  -g   -std=gnu++17 -o CMakeFiles/imgui.dir/imgui_impl_glfw.cpp.o -c /home/wq/Téléchargements/YASE/imgui/imgui_impl_glfw.cpp",
+  "file": "/home/wq/Téléchargements/YASE/imgui/imgui_impl_glfw.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/imgui",
+  "command": "/usr/bin/clang++-7   -I/opt/yas/include  -g   -std=gnu++17 -o CMakeFiles/imgui.dir/imgui_impl_opengl3.cpp.o -c /home/wq/Téléchargements/YASE/imgui/imgui_impl_opengl3.cpp",
+  "file": "/home/wq/Téléchargements/YASE/imgui/imgui_impl_opengl3.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/imgui",
+  "command": "/usr/bin/clang++-7   -I/opt/yas/include  -g   -std=gnu++17 -o CMakeFiles/imgui.dir/imgui_widgets.cpp.o -c /home/wq/Téléchargements/YASE/imgui/imgui_widgets.cpp",
+  "file": "/home/wq/Téléchargements/YASE/imgui/imgui_widgets.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/imgui",
+  "command": "/usr/bin/clang++-7   -I/opt/yas/include  -g   -std=gnu++17 -o CMakeFiles/imgui.dir/imgui_other.cpp.o -c /home/wq/Téléchargements/YASE/imgui/imgui_other.cpp",
+  "file": "/home/wq/Téléchargements/YASE/imgui/imgui_other.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/crazygl",
+  "command": "/usr/bin/clang++-7   -I/opt/yas/include  -g   -std=gnu++17 -o CMakeFiles/crazygl.dir/shaders.cpp.o -c /home/wq/Téléchargements/YASE/crazygl/shaders.cpp",
+  "file": "/home/wq/Téléchargements/YASE/crazygl/shaders.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/crazygl",
+  "command": "/usr/bin/clang++-7   -I/opt/yas/include  -g   -std=gnu++17 -o CMakeFiles/crazygl.dir/textures.cpp.o -c /home/wq/Téléchargements/YASE/crazygl/textures.cpp",
+  "file": "/home/wq/Téléchargements/YASE/crazygl/textures.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/wutils",
+  "command": "/usr/bin/clang++-7   -I/opt/yas/include  -g   -std=gnu++17 -o CMakeFiles/wutils.dir/vfs_local.cpp.o -c /home/wq/Téléchargements/YASE/wutils/vfs_local.cpp",
+  "file": "/home/wq/Téléchargements/YASE/wutils/vfs_local.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/yase",
+  "command": "/usr/bin/clang++-7  -D_LITTLE_ENDIAN -I/opt/yas/include -I/home/wq/Téléchargements/YASE/crazygl -I/home/wq/Téléchargements/YASE/wutils -I/home/wq/Téléchargements/YASE/yase/include  -g   -std=gnu++17 -o CMakeFiles/yase.dir/animation_manager.cpp.o -c /home/wq/Téléchargements/YASE/yase/animation_manager.cpp",
+  "file": "/home/wq/Téléchargements/YASE/yase/animation_manager.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/yase",
+  "command": "/usr/bin/clang++-7  -D_LITTLE_ENDIAN -I/opt/yas/include -I/home/wq/Téléchargements/YASE/crazygl -I/home/wq/Téléchargements/YASE/wutils -I/home/wq/Téléchargements/YASE/yase/include  -g   -std=gnu++17 -o CMakeFiles/yase.dir/base_manager.cpp.o -c /home/wq/Téléchargements/YASE/yase/base_manager.cpp",
+  "file": "/home/wq/Téléchargements/YASE/yase/base_manager.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/yase",
+  "command": "/usr/bin/clang++-7  -D_LITTLE_ENDIAN -I/opt/yas/include -I/home/wq/Téléchargements/YASE/crazygl -I/home/wq/Téléchargements/YASE/wutils -I/home/wq/Téléchargements/YASE/yase/include  -g   -std=gnu++17 -o CMakeFiles/yase.dir/camera.cpp.o -c /home/wq/Téléchargements/YASE/yase/camera.cpp",
+  "file": "/home/wq/Téléchargements/YASE/yase/camera.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/yase",
+  "command": "/usr/bin/clang++-7  -D_LITTLE_ENDIAN -I/opt/yas/include -I/home/wq/Téléchargements/YASE/crazygl -I/home/wq/Téléchargements/YASE/wutils -I/home/wq/Téléchargements/YASE/yase/include  -g   -std=gnu++17 -o CMakeFiles/yase.dir/env_manager.cpp.o -c /home/wq/Téléchargements/YASE/yase/env_manager.cpp",
+  "file": "/home/wq/Téléchargements/YASE/yase/env_manager.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/yase",
+  "command": "/usr/bin/clang++-7  -D_LITTLE_ENDIAN -I/opt/yas/include -I/home/wq/Téléchargements/YASE/crazygl -I/home/wq/Téléchargements/YASE/wutils -I/home/wq/Téléchargements/YASE/yase/include  -g   -std=gnu++17 -o CMakeFiles/yase.dir/model_manager.cpp.o -c /home/wq/Téléchargements/YASE/yase/model_manager.cpp",
+  "file": "/home/wq/Téléchargements/YASE/yase/model_manager.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/yase",
+  "command": "/usr/bin/clang++-7  -D_LITTLE_ENDIAN -I/opt/yas/include -I/home/wq/Téléchargements/YASE/crazygl -I/home/wq/Téléchargements/YASE/wutils -I/home/wq/Téléchargements/YASE/yase/include  -g   -std=gnu++17 -o CMakeFiles/yase.dir/scene_manager.cpp.o -c /home/wq/Téléchargements/YASE/yase/scene_manager.cpp",
+  "file": "/home/wq/Téléchargements/YASE/yase/scene_manager.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/yase",
+  "command": "/usr/bin/clang++-7  -D_LITTLE_ENDIAN -I/opt/yas/include -I/home/wq/Téléchargements/YASE/crazygl -I/home/wq/Téléchargements/YASE/wutils -I/home/wq/Téléchargements/YASE/yase/include  -g   -std=gnu++17 -o CMakeFiles/yase.dir/shader_manager.cpp.o -c /home/wq/Téléchargements/YASE/yase/shader_manager.cpp",
+  "file": "/home/wq/Téléchargements/YASE/yase/shader_manager.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/yase",
+  "command": "/usr/bin/clang++-7  -D_LITTLE_ENDIAN -I/opt/yas/include -I/home/wq/Téléchargements/YASE/crazygl -I/home/wq/Téléchargements/YASE/wutils -I/home/wq/Téléchargements/YASE/yase/include  -g   -std=gnu++17 -o CMakeFiles/yase.dir/skybox_manager.cpp.o -c /home/wq/Téléchargements/YASE/yase/skybox_manager.cpp",
+  "file": "/home/wq/Téléchargements/YASE/yase/skybox_manager.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/yase",
+  "command": "/usr/bin/clang++-7  -D_LITTLE_ENDIAN -I/opt/yas/include -I/home/wq/Téléchargements/YASE/crazygl -I/home/wq/Téléchargements/YASE/wutils -I/home/wq/Téléchargements/YASE/yase/include  -g   -std=gnu++17 -o CMakeFiles/yase.dir/sound_manager.cpp.o -c /home/wq/Téléchargements/YASE/yase/sound_manager.cpp",
+  "file": "/home/wq/Téléchargements/YASE/yase/sound_manager.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/yase",
+  "command": "/usr/bin/clang++-7  -D_LITTLE_ENDIAN -I/opt/yas/include -I/home/wq/Téléchargements/YASE/crazygl -I/home/wq/Téléchargements/YASE/wutils -I/home/wq/Téléchargements/YASE/yase/include  -g   -std=gnu++17 -o CMakeFiles/yase.dir/texture_manager.cpp.o -c /home/wq/Téléchargements/YASE/yase/texture_manager.cpp",
+  "file": "/home/wq/Téléchargements/YASE/yase/texture_manager.cpp"
+},
+{
+  "directory": "/home/wq/Téléchargements/YASE/build/yase_creator",
+  "command": "/usr/bin/clang++-7   -I/opt/yas/include -I/home/wq/Téléchargements/YASE/imgui -I/home/wq/Téléchargements/YASE/crazygl -I/home/wq/Téléchargements/YASE/wutils -I/home/wq/Téléchargements/YASE/yase/include  -g   -std=gnu++17 -o CMakeFiles/yase_creator.dir/main.cpp.o -c /home/wq/Téléchargements/YASE/yase_creator/main.cpp",
+  "file": "/home/wq/Téléchargements/YASE/yase_creator/main.cpp"
+}
+]

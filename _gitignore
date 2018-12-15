@@ -1,0 +1,13 @@
+*.TMP
+.vs/
+build/
+debug/
+cmake-*
+.vscode/
+.idea/
+3dparty/
+buildjs/
+build_js/
+.vscode/
+yas_creator/model/
+yase_creator/model/
