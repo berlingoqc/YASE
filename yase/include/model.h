@@ -1,18 +1,17 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include <string>
 #include <yas/serialize.hpp>
 
-namespace YASE::DEF
-{
 	enum TexWrappingOptions { REPEATED, MIRRORED_REPEATED, CLAMP_EDGE, CLAMP_BORDER };
 
 	enum TexFilterOptions { NEAREST, LINEAR };
 
 	struct Texture
 	{
-		string		name; // nom du fichier
-		string		category; // category de la texture
+		std::string		name; // nom du fichier
+		std::string		category; // category de la texture
 
 		unsigned char*		data;
 		int			size_data;
@@ -21,8 +20,8 @@ namespace YASE::DEF
 		int			height;
 		int			channels;
 
-		Texture() : name(), category(), width(), height(), channels() {}
-		Texture(string n,string cat,int w, int h, int c) : name(n), category(cat), width(w), height(h), channels(c) {}
+		Texture() {}
+		Texture(std::string n,std::string cat,int w, int h, int c) : name(n), category(cat), width(w), height(h), channels(c) {}
 
 		template<typename Ar>
 		void serialize(Ar &ar) {
@@ -45,13 +44,13 @@ namespace YASE::DEF
 
 	struct SkyBox
 	{
-		string		name;
-		string		ext;
+		std::string		name;
+		std::string		ext;
 
 		int			total_size;
 
 		SkyBox() : name(), ext(), total_size() {}
-		SkyBox(string n,string e,int ts) : name(n), ext(e),total_size(ts) {}
+		SkyBox(std::string n,std::string e,int ts) : name(n), ext(e),total_size(ts) {}
 
 		template<typename Ar>
 		void serialize(Ar& ar) {
@@ -64,14 +63,14 @@ namespace YASE::DEF
 
 	struct ShaderFile
 	{
-		string		file_name;
-		string		version;
+		std::string		file_name;
+		std::string		version;
 		ShaderType	type;
 	};
 
 	struct ShaderProgram
 	{
-		string		name;
+		std::string		name;
 		ShaderFile	vertex_shader;
 		ShaderFile	fragment_shader;
 		ShaderFile	geometry_shader;
@@ -136,19 +135,19 @@ namespace YASE::DEF
 
 		std::vector<Vertex>			vertices;
 		std::vector<unsigned int>	indices;
-		std::vector<string>			texture_keys;
+		std::vector<std::string>			texture_keys;
 
 	};
 
 	struct Model
 	{
-		string				name;
+		std::string				name;
 		std::vector<Mesh>	meshes;
 	};
 
 	struct CameraPosition
 	{
-		string	name;
+		std::string	name;
 
 		Vec3f	front;
 		Vec3f	position;
@@ -166,17 +165,36 @@ namespace YASE::DEF
 
 	struct MatriceModel
 	{
-		Vec3f	translation;
-		float	angle_rotation;
-		Vec3f	rotation;
-		Vec3f	scale;
+	Vec3f	translation = Vec3f(1.0f,1.0f,1.0f);
+	Vec3f	scale = Vec3f(1.0f,1.0f,1.0f);
+	Vec3f	rotation = Vec3f(1.0f,1.0f,1.0f);
+	float				angle_rotation = 0.0f;
+
+
+	void updateModel(glm::mat4& mat_model,bool newmodel = true) {
+		// Calcul ca matrice model
+		if(newmodel)
+			mat_model = glm::mat4(1.0f);
+		const auto t = glm::vec3(translation.x, translation.y, translation.z);
+		const auto s = glm::vec3(scale.x, scale.y, scale.z);
+		const auto r = glm::vec3(rotation.x, rotation.y, rotation.z);
+		mat_model = glm::translate(mat_model, t); // translate it down so it's at the center of the scene
+		if (angle_rotation != 0)
+			mat_model = glm::rotate(mat_model, glm::radians(angle_rotation), r);
+		mat_model = glm::scale(mat_model, s);	// it's a bit too big for our scene, so scale it down
+	}
+
+	template<typename Ar>
+	void serialize(Ar& ar) {
+		ar & YAS_OBJECT(nullptr, translation, scale, rotation, angle_rotation);
+	}
 	};
 
 
 	struct InitialModel
 	{
-		string	model_key;
-		string  name;
+		std::string	model_key;
+		std::string  name;
 
 		MatriceModel transformation;
 	};
@@ -184,30 +202,30 @@ namespace YASE::DEF
 
 	struct Scene
 	{
-		string					name;
+		std::string					name;
 
-		string					skybox_name;
+		std::string					skybox_name;
 
-		vector<string>			needed_model;
+		std::vector<std::string>			needed_model;
 
 		CameraPosition			work_camera;
-		vector<CameraPosition>	scene_camera;
+		std::vector<CameraPosition>	scene_camera;
 	};
 
 	struct Environment
 	{
-		string		name;
-		string		root;
+		std::string		name;
+		std::string		root;
 
 
-		string		active_scene;
+		std::string		active_scene;
 
-		vector<Scene> scenes;
+		std::vector<Scene> scenes;
 
 		Environment() : name(), root(), active_scene(), scenes() {
 
 		}
-		Environment(string n, string r, string as, vector<Scene> s) : name(n), root(r), active_scene(as), scenes(s) {
+		Environment(std::string n, std::string r, std::string as, std::vector<Scene> s) : name(n), root(r), active_scene(as), scenes(s) {
 
 		}
 
@@ -216,8 +234,6 @@ namespace YASE::DEF
 			ar & YAS_OBJECT(nullptr, name, root, active_scene);
 		}
 	};
-
-}
 
 
 #endif

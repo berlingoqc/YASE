@@ -13,7 +13,7 @@ class FPSCamera
 {
 
 public:
-	string name = "default";
+	std::string name = "default";
 
 	glm::vec3 camera_pos =  glm::vec3(0.0f, 0.5f, 7.0f);
 	glm::vec3 camera_front = glm::vec3(0.0f, 0.25f, -1.0f);
@@ -33,26 +33,14 @@ public:
 
 	glm::vec3 camera_speed = { 0.8f,2.0f,0.8f };
 
-	YASE::DEF::Vec3f p = {0.0f,0.5f, 7.0f};
-	YASE::DEF::Vec3f f = {0.0f,0.25f,-1.0f};
-	YASE::DEF::Vec3f s = {0.8f,2.0f,0.8f};
-	YASE::DEF::Vec3f h = {0.0f,5.0f,0.0f};
+	Vec3f p = {0.0f,0.5f, 7.0f};
+	Vec3f f = {0.0f,0.25f,-1.0f};
+	Vec3f s = {0.8f,2.0f,0.8f};
+	Vec3f h = {0.0f,5.0f,0.0f};
 
-	glm::vec3 getCamForward() const {
-		glm::vec3 camDevant;
-		camDevant.x = camera_front.x;
-		camDevant.z = camera_front.z;
-		if (move_y)
-			camDevant.y = camera_front.y;
-		else
-			camDevant.y = 0.0f;
-		return camDevant;
-	}
-
-	FPSCamera()
-	{
-		
-	}
+	glm::vec3 getCamForward() const;	
+	
+	FPSCamera();
 
 	void fuckme() {
 		camera_pos.x = p.x; camera_pos.y = p.y; camera_pos.z = p.z;
@@ -69,8 +57,8 @@ public:
 		h.x = camera_up.x; h.y = camera_up.y; h.z = camera_up.z;
 		ar & YAS_OBJECT(nullptr, p, f, h, yaw, pitch, fov, s);
 	}
-	string getName() { return name; }
-	void setName(string s) { name = s; }
+	std::string getName() { return name; }
+	void setName(std::string s) { name = s; }
 	const glm::vec3& getCameraPosition() const { return camera_pos; }
 	const glm::vec3& getCameraFront() const { return camera_front; }
 	const glm::vec3& getCameraUp() const { return camera_up; }
@@ -126,35 +114,6 @@ public:
 		first_mouse = true;
 	}
 
-	void move(int x, int y)
-	{
-		if (first_mouse) {
-			last_x = x;
-			last_y = y;
-			first_mouse = false;
-		}
-
-		GLfloat xoffset = x - last_x;
-		GLfloat yoffset = last_y - y;
-		last_x = x;
-		last_y = y;
-
-		GLfloat sensitivity = 0.3;
-		xoffset *= sensitivity;
-		yoffset *= sensitivity;
-
-		yaw += xoffset;
-		pitch += yoffset;
-
-		if (pitch > 89.0f) pitch = 89.0f;
-		if (pitch < -89.0f) pitch = -89.0f;
-
-		glm::vec3 front;
-		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		front.y = sin(glm::radians(pitch));
-		front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		camera_front = glm::normalize(front);
-	}
 	void addFOV(float v)
 	{
 		fov += v;
@@ -170,6 +129,7 @@ public:
 		return fov;
 	}
 
+	void move(int x, int y);
 
 };
 

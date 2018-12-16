@@ -1,7 +1,33 @@
 // Include STD
 #include <iostream>
 
-#include "header.h"
+// Import des header de opengl
+#ifdef EMSCRIPTEN
+
+#include <emscripten/emscripten.h>
+#include <emscripten/fetch.h>
+#define GLFW_INCLUDE_ES3
+#include <GLFW/glfw3.h>
+#include <GLES3/gl3.h>
+
+
+#include <experimental/filesystem>
+
+namespace fs = std::experimental::filesystem;
+
+#define END_PROGRAM(code) emscripten_force_exit(code)
+
+#else
+
+#include <experimental/filesystem>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+namespace fs = std::experimental::filesystem;
+
+#define END_PROGRAM(code) printf("End of program goodbye\n"); return
+
+#endif
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -15,7 +41,9 @@
 #include <future>
 #include <queue>
 #include <sstream>
+
 #include "picojson.h"
+
 using namespace std;
 
 static void glfw_error_callback(int error, const char* description)
