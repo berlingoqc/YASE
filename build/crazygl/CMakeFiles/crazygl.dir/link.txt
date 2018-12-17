@@ -1,2 +1,0 @@
-/usr/bin/ar qc libcrazygl.a  CMakeFiles/crazygl.dir/shaders.cpp.o CMakeFiles/crazygl.dir/textures.cpp.o
-/usr/bin/ranlib libcrazygl.a

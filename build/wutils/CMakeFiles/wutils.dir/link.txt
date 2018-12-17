@@ -1,2 +1,0 @@
-/usr/bin/ar qc libwutils.a  CMakeFiles/wutils.dir/vfs_local.cpp.o
-/usr/bin/ranlib libwutils.a

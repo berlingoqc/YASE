@@ -1,1 +1,0 @@
-/usr/bin/clang++-7  -g   CMakeFiles/yase_creator.dir/main.cpp.o  -o yase_creator ../imgui/libimgui.a ../yase/libyase.a ../crazygl/libcrazygl.a ../wutils/libwutils.a /usr/lib/x86_64-linux-gnu/libOpenGL.so /usr/lib/x86_64-linux-gnu/libGLX.so /usr/lib/x86_64-linux-gnu/libGLU.so -lGL -lGLEW -lglfw -lstdc++fs -lassimp -lSOIL 
