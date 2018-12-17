@@ -7,12 +7,12 @@
 #include <exception>
 #include <future>
 
-
 #include <experimental/filesystem>
 
 namespace fs = std::experimental::filesystem;
 
 enum VFS_ERROR_CODE {
+	VFS_NO_ERROR,
     VFS_FILE_DONT_EXISTS,
     VFS_FOLDER_DONT_EXISTS,
 	VFS_READING_ERROR,
@@ -26,8 +26,17 @@ enum VFS_FILE_TYPE {
 	VFS_FILE
 };
 
-enum VFS_FILE_PERMISSION {
+enum VFS_IOS {
+	VFS_BINARY = 1 << 0,
+	VFS_STRING = 1 << 1,
+	VFS_TRUNCATE = 1 << 2,
+	VFS_APPEND = 1 << 3
+};
 
+
+enum VFS_FILE_PERMISSION {
+	VFS_PERMISSION_READ = 1 << 0,
+	VFS_PERMISSION_WRITE = 1 << 1
 };
 
 
@@ -45,6 +54,10 @@ protected:
 struct VFileEx : public std::exception {
 	VFS_ERROR_CODE 			code;
 	std::string 			message;
+
+
+	VFileEx() : code(VFS_NO_ERROR), message("") {
+	}
 
 	VFileEx(VFS_ERROR_CODE e, std::string n) {
 		code = e;
@@ -68,7 +81,7 @@ inline void fill_ex_bad_type(VFileEx& ex, const std::string& name) {
 }
 
 struct VData {
-	std::unique_ptr<char*>		data;
+	std::unique_ptr<char[]>		data;
 	int							size;
 };
 
@@ -89,14 +102,11 @@ struct VPath {
 		return type == VFS_FILE;
 	}
 
-	// Append une partie au path ( comme un fichier ou un repertoire )
-	// ne valide pas tout de suite que le path est valide c'est quand
-	// on le donne a VFS
+	// Append au path courant , est valider la prochaine fois que passer a VFS
 	void	append(std::string p);
-	// Ajoute un autre path au bout de mon path
 	void	append(const VPath& p);
 
-	// Retourn une version string de chemin
+
 	std::string toString() const;
 
 };
@@ -104,12 +114,15 @@ struct VPath {
 struct VFileInfo {
 
 	int			size;
+	VPath		path;
 
-public:
+	const VPath&	getPath() const {
+		return path;
+	}
 
-	VFileInfo();
-
-	const VPath&	getPath();
+	int	getSize() const {
+		return size;
+	}
 
 };
 
@@ -120,83 +133,64 @@ public:
 
 	}
 
-	int	GetTotalSize() {
+	int	GetTotalSize() const {
 
 		return 0;
 	}
 
 	const VFileInfo&	GetFileInfo(int index);
 	const VFileInfo&	GetFileInfo(VPath path);
-
 };
 
 class VFS {
 
 public:
+	// Retourne une struture d'information sur un fichier
+	virtual VFileInfo					GetFileInfo(const VPath& path,VFileEx& ex) = 0;
+	// Retourne la liste des fichiers dans un repertoire
+	virtual std::vector<VFileInfo>		GetFilesInfoDirectory(const VPath& path,VFileEx& ex) = 0;
+	// Retourne le contenue d'un fichier de facon synchrone
+	virtual VData						ReadFile(const VFileInfo& file,VFileEx& ex) = 0;
+	// Retourne le contenue d'une fichier de facon synchrone
+	virtual std::future<VData> 			GetFileDataAsync(const VFileInfo& p,VFileEx& ex) = 0;
+	// Indique si le vpath exists peux importer c'est quelle type
+	virtual bool Exists(const VPath& p) = 0;
+	// Crée un nouveau repertoire dans le path indiquer
+	virtual void CreateDirectory(const VPath& p,VFileEx& ex) = 0;
+	// Crée un nouveau fichier vide
+	virtual void CreateFile(const VPath& p,VFileEx& ex) = 0;
+	// Écrit dans un fichier avec le payload passer de facon synchrone
+	virtual void WriteFile(const VPath& p,VFS_IOS ios,VFileEx& ex) = 0;
+};
+// VPath est toujours relative a son parent
+struct LPath : VPath {
 
-	// Get un VPath construit avec les differences morceaux passé
-	// toujours a partir du root folder de VFS
-	virtual VPath						GetVPath(std::string items,...) = 0;
+	fs::path	_path;
 
+	LPath(fs::path p);
 
-	// Retourne une structure d'informations sur un fichier
-	virtual VFileInfo					GetFileInfo(const VPath& path) = 0;
+	void	append(std::string p);
+	void	append(const VPath& p);
 
-	// Retourn l'information sur tout le fichiers du repertoire
-	virtual VDirectoryInfo				GetFilesInfoDirectory(const VPath& path) = 0;
-
-
-	// Lit le contenue d'un fichier de facon synchrone
-	virtual VData						ReadFile(const VFileInfo& file,VFileEx& ex);
-	
-	// Lit le contenue d'un fichier de facon asynchrone
-	// les donnes sont contenue dans le future retourner
-	virtual std::future<VData> 			GetFileDataAsync(const VFileInfo& p,VFileEx& ex);
-
-	// Indique si le path exists peux importe il s'agit de quoit
-	virtual bool Exists(const VPath& p);
-
-	// Crée un nouveau repertoire de VPath relative au root folder
-	virtual bool CreateDirectory(const VPath& p);
+	std::string toString() const;
 };
 
 class LocalFS : public VFS {
-
-
-	fs::path 		root_directory;
+	fs::path		_root;
 
 
 public:
 
-	LocalFS(std::string root_path) {
+	LocalFS(fs::path root,VFileEx& ex);
 
-	}
-
-
-	VPath GetVPath(int items,...) {
-		VPath p;
-		va_list arguments;
-		va_start(arguments,items);
-		for(int i=0;i<items;i++) {
-			p.append(va_arg(arguments,const char*));
-		}
-		va_end(arguments);
-		return p;
-	}
-
-	VFileInfo GetFileInfo(const VPath& path,VFileEx& ex) {
-		if(!Exists(path)) { // Erreur si le path n'existe pas
-			ex.code = VFS_FILE_DONT_EXISTS;
-			fill_ex_bad_type(ex,path.toString());
-			return {};
-		}
-		if(path.is_directory()) {
-			ex.code = VFS_NOT_FILE_ERROR;
-			fill_ex_bad_type(ex,path.toString());
-			return {};
-		}
-		// Va chercher l'information sur le dossier	
-	}
+	VFileInfo GetFileInfo(const VPath& path,VFileEx& ex) override;
+	std::vector<VFileInfo>		GetFilesInfoDirectory(const VPath& path,VFileEx& ex) override;
+	VData						ReadFile(const VFileInfo& file,VFileEx& ex) override;
+	std::future<VData> 			GetFileDataAsync(const VFileInfo& p,VFileEx& ex) override;
+	bool Exists(const VPath& p) override;
+	void CreateDirectory(const VPath& p,VFileEx& ex) override;
+	void CreateFile(const VPath& p,VFileEx& ex) override;
+	void WriteFile(const VPath& p,VFS_IOS ios,VFileEx& ex) override;
 };
 
 #endif

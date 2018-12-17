@@ -51,6 +51,10 @@ link_directories(
 	${SOIL_LIBRARY}
 )
 
+
+find_package(Catch2 REQUIRED)
+
+
 # Include sub-projects.
 add_subdirectory ("imgui")
 add_subdirectory ("crazygl")
