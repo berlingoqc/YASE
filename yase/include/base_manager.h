@@ -10,7 +10,7 @@
 #include <yas/file_streams.hpp>
 
 #include "model.h"
-#include "vfs.h"
+//#include "vfs.h"
 
 using namespace yas;
 

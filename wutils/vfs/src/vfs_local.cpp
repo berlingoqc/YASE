@@ -3,25 +3,6 @@
 #include <fstream>
 #include <cstdarg>
 
-// DEFINITION LPath
-
-LPath::LPath(fs::path p) : _path(p) {
-}
-
-std::string LPath::toString() const {
-    return _path.string();
-}
-
-void LPath::append(std::string p) {
-    _path = _path / p;
-}
-
-
-void LPath::append(const VPath& p) {
-    append(p.toString());
-}
-
-
 // DEFINITION LocalFS
 
 
@@ -34,41 +15,43 @@ LocalFS::LocalFS(fs::path root, VFileEx& ex) {
     _root = root;
 }
 
-VPath LocalFS::GetVPath(int items,...) {
-	VPath p;
-	va_list arguments;
-	va_start(arguments,items);
-	for(int i=0;i<items;i++) {
-		p.append(va_arg(arguments,const char*));
-	}
-	va_end(arguments);
-	return p;
+fs::path LocalFS::stripRoot(const fs::path& path) {
+
+}
+
+VPath LocalFS::toVPath(const fs::path& path) {
+    VPath p;
+    for(const auto& i : path) {
+        p.append(i.string());
+    }
+    return p;
 }
 
 VFileInfo LocalFS::GetFileInfo(const VPath& path,VFileEx& ex) {
 	if(path.is_directory()) {
-		fill_ex_bad_type(ex,path.toString());
+		fill_ex_bad_type(ex,toString(path));
 		return {};
 	}
+    return VFileInfo();
 }
 
 std::vector<VFileInfo> LocalFS::GetFilesInfoDirectory(const VPath& path,VFileEx& ex) {
-    fs::path p = _root / path.toString();
+    fs::path p = _root / toString(path);
     std::vector<VFileInfo> files;
-    for(auto& p : fs::directory_iterator(p)) {
-        if(fs::is_regular_file(p)) {
-            VFileInfo vf;
-            vf.path = LPath(p.path());
+    std::error_code ec;
+    for(const auto& i : fs::directory_iterator(p)) {
+        if(fs::is_regular_file(i,ec)) {
+            VPath vp = toVPath(i.path());
             std::error_code e;
-            vf.size = fs::file_size(p.path(),e);
-            files.emplace_back(vf);
+            int size = fs::file_size(i.path(),e);
+            files.emplace_back(VFileInfo(vp,size));
         }
     }
     return files;
 }
 
 VData LocalFS::ReadFile(const VFileInfo& file,VFileEx& ex) {
-    fs::path p = _root / file.getPath().toString();
+    fs::path p = _root / toString(file.getPath());
     if(!fs::exists(p)) {
         ex.code = VFS_FILE_DONT_EXISTS;
         fill_ex_bad_type(ex,p.string());
@@ -92,7 +75,6 @@ std::future<VData> LocalFS::GetFileDataAsync(const VFileInfo& p,VFileEx& ex) {
     return std::async(std::launch::async,[&]()->VData{
         return ReadFile(p,ex);
     });
-
 }
 
 bool LocalFS::Exists(const VPath& p) {
@@ -109,4 +91,12 @@ void LocalFS::CreateFile(const VPath& p,VFileEx& ex) {
 
 void LocalFS::WriteFile(const VPath& p,VFS_IOS ios,VFileEx& ex) {
 
+}
+
+std::string LocalFS::toString(const VPath& path) {
+    fs::path p;
+    for(const auto& i : path.name) {
+        p = p / i;
+    }
+    return p.string();
 }

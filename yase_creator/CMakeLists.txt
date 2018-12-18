@@ -12,7 +12,7 @@ target_link_libraries(yase_creator
 	imgui
 	yase
 	crazygl
-	wutils
+	#wutils
 	${OPENGL_LIBRARY}
 	${GL_LIBS}
 )

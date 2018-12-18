@@ -83,7 +83,6 @@ void YaseModel::Draw(uint shader)
 		processNode(scene->mRootNode, scene, tm);
 
 
-
 		return true;
 	}
 	void YaseModel::processNode(aiNode* node, const aiScene* scene,TextureManager* tm)

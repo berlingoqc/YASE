@@ -9,11 +9,20 @@
 
 class HomeWindow
 {
+	const char*	recent_file = "recent.yase";
+	RecentEnvrionment	recent_environment;
 	EnvManager* loader = nullptr;
+	
 
 public:
 	HomeWindow(EnvManager* el) : loader(el)
 	{
+		// A la construction load le fichier 
+		fs::path p = recent_file;
+		if(fs::exists(p)) {
+			// load le fichier		
+		}
+
 		
 	}
 	

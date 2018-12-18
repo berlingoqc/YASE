@@ -150,7 +150,8 @@ struct ModelManager_Panel {
 			}
 
 			ImGui::Separator();
-
+			static int selection_mesh_mask = (1 << 2);
+			static int selected_mesh_index = -1;
 			static int selection_mask = (1 << 2);
 			static int selected_index = -1;
 			static string selected_model = "";
@@ -168,23 +169,45 @@ struct ModelManager_Panel {
 					if (node_open) {
 						if (t.second == nullptr) {
 							ImGui::Text("Model non charger");
+							ImGui::SameLine();
+							if(ImGui::Button("Charger ?")) {
+								// Load le model pour que c'est info soit afficher
+							}
 						} else
 						{
-							/// Si le model est loader on affiche c'est informations detailler sur les meshes
-							// Affiche le total de mesh 
-							ImGui::Text("Nombre de mesh : %d", t.second->getMeshes().size());
 							if(ImGui::TreeNode("Mesh"))
 							{
+								ImGui::TextColored({255,255,0,1},"%d meshes", t.second->getMeshes().size());
+								int ii = 0;
 								for(auto& m : t.second->meshes)
 								{
+									ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ((selection_mesh_mask & (1 << i)) ? ImGuiTreeNodeFlags_Selected : 0);
+									bool node_mesh_open = ImGui::TreeNodeEx((void*)(intptr_t)ii, node_flags, "%d",ii);
+									if (ImGui::IsItemClicked()) {
+										selected_mesh_index = ii;
+									}
+									if(node_mesh_open) {
+										// Affiche les detailles de cette meshes
+										ImGui::Text("Nombre de vertices : %d",t.second->getMeshes()[ii].vertices.size());
+										ImGui::Text("Nombre d'indice : %d",t.second->getMeshes()[ii].indices.size());
+										ImGui::TextColored({255,255,0,1},"Texture requise");
+										ImGui::Separator();
+										for(const auto& tex : t.second->getMeshes()[ii].getNeededTexture()) {
+											ImGui::Text("%s",tex.c_str());
+										}
+										ImGui::TreePop();
+									}
 
-									
+									ii++;
+								}
+								
+								if (selected_mesh_index != -1)
+								{
+									selection_mesh_mask = (1 << selected_mesh_index);
 								}
 								ImGui::TreePop();
 							}
-							// Affiche un treenode pour chaque mesh
 						}
-
 						ImGui::TreePop();
 					}
 					i++;

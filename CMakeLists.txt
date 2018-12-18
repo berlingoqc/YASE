@@ -27,7 +27,8 @@ set(YAS_INCLUDE_PATH "" CACHE PATH "The directory that contains yas/serialize.hp
 
 
 if(UNIX)
-	set( GL_LIBS GL GLEW glfw stdc++fs assimp SOIL)
+	set( BASE_LIBS stdc++fs )
+	set( GL_LIBS GL GLEW glfw ${BASE_LIBS} assimp SOIL)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 	add_subdirectory("3dparty/soil")
 	set( GL_LIBS GL GLEW glfw libassimp soil)
@@ -52,12 +53,11 @@ link_directories(
 )
 
 
-find_package(Catch2 REQUIRED)
-
 
 # Include sub-projects.
 add_subdirectory ("imgui")
 add_subdirectory ("crazygl")
-add_subdirectory ("wutils")
+add_subdirectory ("asset_converter")
+#add_subdirectory ("wutils")
 add_subdirectory ("yase")
 add_subdirectory ("yase_creator")

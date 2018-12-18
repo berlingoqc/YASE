@@ -32,20 +32,13 @@ struct YaseTextureInfo {
 // ceux qu'on veut utiliser quand le temps est venu
 class TextureManager : public AssetManager {
 public:
-	ENGINE::MyTexture					texture_loader; // Classe pour charger les textures
-	std::vector<Texture>		textures; // Liste de nos textures dans notre repertoire
-	std::vector<std::string>			categories; // Liste des cat�gories de texture ??
+	ENGINE::MyTexture							texture_loader; // Classe pour charger les textures
+	std::vector<Texture>						textures; // Liste de nos textures dans notre repertoire
+	std::vector<std::string>					categories; // Liste des cat�gories de texture ??
 	std::map<std::string, YaseTextureInfo>		loaded_textures; // Contient les informations sur des textures avec les info de loading utiliser par un context donner
 
 	int nbr_loaded_gl = 0;
 
-	virtual void saveManager(std::ostream* writer) {
-
-	}
-
-	virtual void loadManager(std::ifstream* reader) {
-
-	}
 
 	template<typename Ar>
 	void serialize(Ar& ar)

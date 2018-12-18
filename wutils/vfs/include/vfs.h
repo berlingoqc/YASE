@@ -7,9 +7,9 @@
 #include <exception>
 #include <future>
 
-#include <experimental/filesystem>
+#include <filesystem>
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 enum VFS_ERROR_CODE {
 	VFS_NO_ERROR,
@@ -90,8 +90,7 @@ struct VDirectory;
 
 // VPath est toujours relative a son parent
 struct VPath {
-	std::shared_ptr<VDirectory>			parent;
-	std::string							name;
+	std::vector<std::string>			name;
 	VFS_FILE_TYPE						type;
 
 	bool	is_directory() const {
@@ -103,11 +102,12 @@ struct VPath {
 	}
 
 	// Append au path courant , est valider la prochaine fois que passer a VFS
-	void	append(std::string p);
-	void	append(const VPath& p);
-
-
-	std::string toString() const;
+	void	append(std::string p) {
+		name.emplace_back(p);
+	}
+	void	append(const VPath& p) {
+		name.insert(name.end(),p.name.begin(),p.name.end());
+	}
 
 };
 
@@ -115,6 +115,14 @@ struct VFileInfo {
 
 	int			size;
 	VPath		path;
+
+	VFileInfo() {
+
+	}
+	VFileInfo(VPath p,int s) {
+		path = p;
+		size = s;
+	}
 
 	const VPath&	getPath() const {
 		return path;
@@ -161,25 +169,22 @@ public:
 	virtual void CreateFile(const VPath& p,VFileEx& ex) = 0;
 	// Écrit dans un fichier avec le payload passer de facon synchrone
 	virtual void WriteFile(const VPath& p,VFS_IOS ios,VFileEx& ex) = 0;
+
+
+	virtual std::string toString(const VPath& p) = 0;
 };
-// VPath est toujours relative a son parent
-struct LPath : VPath {
 
-	fs::path	_path;
-
-	LPath(fs::path p);
-
-	void	append(std::string p);
-	void	append(const VPath& p);
-
-	std::string toString() const;
+class CloudFS : public VFS {
+	
 };
 
 class LocalFS : public VFS {
 	fs::path		_root;
 
-
 public:
+
+	fs::path stripRoot(const fs::path& path);
+	VPath toVPath(const fs::path& path);
 
 	LocalFS(fs::path root,VFileEx& ex);
 
@@ -191,6 +196,9 @@ public:
 	void CreateDirectory(const VPath& p,VFileEx& ex) override;
 	void CreateFile(const VPath& p,VFileEx& ex) override;
 	void WriteFile(const VPath& p,VFS_IOS ios,VFileEx& ex) override;
+
+
+	virtual std::string toString(const VPath& path) override;
 };
 
 #endif

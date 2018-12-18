@@ -31,14 +31,14 @@
 
 	BaseScene::BaseScene()
 	{
-		ENGINE::MyShader shader;
-		if (!shader.OpenMyShader("default_shaders/vert_shader.glsl", "default_shaders/frag_shader.glsl"))
+		ENGINE::ShaderCompiler shader;
+		if (!shader.CompileShaderProgram(fs::path("build/yase_creator/default_shaders/vert_shader.glsl"), fs::path("build/yase_creator/default_shaders/frag_shader.glsl")))
 		{
 			std::cout << "Echer lors de l'ouverture des shaders par default" << std::endl;
 			return;
 		}
 		this->shader_texture = shader.GetShaderID();
-		if (!shader.OpenMyShader("default_shaders/vert_skybox.glsl", "default_shaders/frag_skybox.glsl"))
+		if (!shader.CompileShaderProgram(fs::path("build/yase_creator/default_shaders/vert_skybox.glsl"), fs::path("build/yase_creator/default_shaders/frag_skybox.glsl")))
 		{
 			std::cout << "Echer lors de l'ouverture des shaders de la skybox" << std::endl;
 			return;
